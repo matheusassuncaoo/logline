@@ -35,10 +35,22 @@ impl Default for WorkspaceIndex {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum CanvasElementKind {
+    StickyNote,
+    Text,
+    Shape,
+    Connector,
+    Frame,
+    Freehand,
+    Image,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CanvasElement {
     pub id: String,
-    pub kind: String,
+    pub kind: CanvasElementKind,
     pub x: f64,
     pub y: f64,
     pub width: f64,

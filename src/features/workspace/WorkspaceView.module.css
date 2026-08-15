@@ -12,6 +12,7 @@
 .newBoard button { display: grid; width: 33px; place-items: center; border: 0; border-radius: 6px; background: var(--accent-primary); color: white; cursor: pointer; }
 .newBoard button:disabled { opacity: 0.4; cursor: default; }
 .boardList { display: grid; gap: 2px; }
+.sidebarStatus { margin: 10px 8px; color: var(--text-tertiary); font-size: 0.75rem; line-height: 1.4; }
 .boardList button { display: flex; gap: 8px; align-items: center; width: 100%; padding: 9px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--text-secondary); text-align: left; font-size: 0.82rem; cursor: pointer; }
 .boardList button:hover, .boardList .boardActive { background: var(--accent-soft); color: var(--accent-primary); }
 .main { display: grid; min-width: 0; grid-template-rows: 71px minmax(0, 1fr); }

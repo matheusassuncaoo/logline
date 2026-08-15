@@ -203,25 +203,35 @@ impl Persistence {
     pub fn add_asset(
         &self,
         workspace_id: &str,
-        file_name: &str,
+        _file_name: &str,
         mime_type: &str,
         bytes: &[u8],
     ) -> Result<AssetData, String> {
         self.workspace(workspace_id)?;
-        if bytes.is_empty() || bytes.len() > 25 * 1024 * 1024 || !mime_type.starts_with("image/") {
+        if bytes.is_empty() || bytes.len() > 25 * 1024 * 1024 {
             return Err("O arquivo deve ser uma imagem de até 25 MB.".to_owned());
         }
+        let extension = image_extension(mime_type)
+            .ok_or_else(|| "O formato da imagem não é suportado.".to_owned())?;
         let id = format!("{:x}", Sha256::digest(bytes));
-        let extension = safe_extension(file_name, mime_type);
-        let path = self
-            .asset_directory(workspace_id)
-            .join(format!("{id}.{extension}"));
+        let directory = self.asset_directory(workspace_id);
+        let path = fs::read_dir(&directory)
+            .map_err(|error| format!("Não foi possível listar os assets: {error}"))?
+            .filter_map(Result::ok)
+            .map(|entry| entry.path())
+            .find(|path| path.file_stem().and_then(|stem| stem.to_str()) == Some(id.as_str()))
+            .unwrap_or_else(|| directory.join(format!("{id}.{extension}")));
         if !path.exists() {
             write_bytes_atomically(&path, bytes)?;
         }
+        let stored_mime_type = mime_for_extension(
+            path.extension()
+                .and_then(|extension| extension.to_str())
+                .unwrap_or(""),
+        );
         Ok(AssetData {
             id,
-            data_url: format!("data:{mime_type};base64,{}", BASE64.encode(bytes)),
+            data_url: format!("data:{stored_mime_type};base64,{}", BASE64.encode(bytes)),
         })
     }
 
@@ -308,15 +318,21 @@ impl Persistence {
         let mut archive = ZipArchive::new(Cursor::new(bytes))
             .map_err(|error| format!("Não foi possível abrir o arquivo .logline: {error}"))?;
         let mut manifest = String::new();
-        archive
+        let mut manifest_entry = archive
             .by_name("manifest.json")
-            .map_err(|_| "O arquivo .logline não contém um manifesto.".to_owned())?
+            .map_err(|_| "O arquivo .logline não contém um manifesto.".to_owned())?;
+        if manifest_entry.size() > 1024 * 1024 {
+            return Err("O manifesto do arquivo .logline excede o limite permitido.".to_owned());
+        }
+        manifest_entry
             .read_to_string(&mut manifest)
             .map_err(|error| format!("Não foi possível ler o manifesto: {error}"))?;
+        drop(manifest_entry);
         let exported: WorkspaceSummary = serde_json::from_str(&manifest)
             .map_err(|error| format!("O manifesto é inválido: {error}"))?;
         validate_name(&exported.name)?;
         let workspace = self.create_workspace(exported.name)?;
+        let mut imported_size = 0_u64;
         for index in 0..archive.len() {
             let mut entry = archive
                 .by_index(index)
@@ -332,18 +348,44 @@ impl Persistence {
             if file_name.is_empty() {
                 continue;
             }
+            if entry.size() > 25 * 1024 * 1024
+                || imported_size.saturating_add(entry.size()) > 100 * 1024 * 1024
+            {
+                return Err("O arquivo .logline excede o limite de conteúdo permitido.".to_owned());
+            }
             let mut contents = Vec::new();
             entry
                 .read_to_end(&mut contents)
                 .map_err(|error| format!("Não foi possível importar o arquivo: {error}"))?;
+            imported_size += contents.len() as u64;
             if name.starts_with("boards/") {
+                if !file_name.ends_with(".json") {
+                    return Err("O arquivo .logline contém um board inválido.".to_owned());
+                }
                 let mut board: Board = serde_json::from_slice(&contents)
                     .map_err(|error| format!("Um board importado é inválido: {error}"))?;
+                if file_name.trim_end_matches(".json") != board.id {
+                    return Err(
+                        "O arquivo do board não corresponde ao seu identificador.".to_owned()
+                    );
+                }
                 board.workspace_id = workspace.id.clone();
                 migrate_board(&mut board)?;
                 validate_board(&board)?;
                 self.write_board(&board)?;
             } else {
+                if !valid_asset_file_name(file_name) {
+                    return Err("O arquivo .logline contém um asset inválido.".to_owned());
+                }
+                let asset_id = file_name
+                    .rsplit_once('.')
+                    .map(|(id, _)| id)
+                    .unwrap_or_default();
+                if asset_id != format!("{:x}", Sha256::digest(&contents)) {
+                    return Err(
+                        "O asset importado não corresponde ao seu identificador.".to_owned()
+                    );
+                }
                 write_bytes_atomically(
                     &self.asset_directory(&workspace.id).join(file_name),
                     &contents,
@@ -452,6 +494,15 @@ impl Persistence {
         {
             let workspace = workspace
                 .map_err(|error| format!("Não foi possível recuperar os boards: {error}"))?;
+            if !workspace
+                .file_type()
+                .map_err(|error| format!("Não foi possível recuperar os boards: {error}"))?
+                .is_dir()
+            {
+                continue;
+            }
+            let workspace_id = workspace.file_name().to_string_lossy().to_string();
+            valid_id(&workspace_id)?;
             let journal = workspace.path().join("journal");
             if !journal.is_dir() {
                 continue;
@@ -461,12 +512,38 @@ impl Persistence {
             {
                 let entry = entry
                     .map_err(|error| format!("Não foi possível recuperar os boards: {error}"))?;
+                if !entry
+                    .file_type()
+                    .map_err(|error| format!("Não foi possível recuperar os boards: {error}"))?
+                    .is_file()
+                    || entry
+                        .path()
+                        .extension()
+                        .and_then(|extension| extension.to_str())
+                        != Some("json")
+                {
+                    continue;
+                }
+                let board_id = entry
+                    .path()
+                    .file_stem()
+                    .and_then(|stem| stem.to_str())
+                    .ok_or_else(|| "O journal de um board é inválido.".to_owned())?
+                    .to_owned();
+                valid_id(&board_id)?;
                 let file = fs::File::open(entry.path())
                     .map_err(|error| format!("Não foi possível recuperar um board: {error}"))?;
                 let mut board: Board = serde_json::from_reader(file)
                     .map_err(|error| format!("O journal de um board está corrompido: {error}"))?;
                 migrate_board(&mut board)?;
+                if board.workspace_id != workspace_id || board.id != board_id {
+                    return Err("O journal não corresponde ao board informado.".to_owned());
+                }
+                validate_board(&board)?;
                 self.write_board(&board)?;
+                self.update_workspace(&workspace_id, |workspace| {
+                    workspace.updated_at = board.updated_at;
+                })?;
                 fs::remove_file(entry.path())
                     .map_err(|error| format!("Não foi possível concluir a recuperação: {error}"))?;
             }
@@ -488,6 +565,34 @@ fn validate_board(board: &Board) -> Result<(), String> {
         .any(|id| !board.elements.contains_key(id))
     {
         return Err("A ordem dos elementos referencia itens inexistentes.".to_owned());
+    }
+    if board.element_order.len() != board.elements.len()
+        || board
+            .element_order
+            .iter()
+            .collect::<std::collections::HashSet<_>>()
+            .len()
+            != board.element_order.len()
+    {
+        return Err("A ordem dos elementos deve conter cada item uma única vez.".to_owned());
+    }
+    for (id, element) in &board.elements {
+        valid_id(id)?;
+        if element.id != *id {
+            return Err("O identificador do elemento não corresponde à sua chave.".to_owned());
+        }
+        valid_id(&element.id)?;
+        if let Some(group_id) = &element.group_id {
+            valid_id(group_id)?;
+        }
+        if !element.x.is_finite()
+            || !element.y.is_finite()
+            || !element.width.is_finite()
+            || !element.height.is_finite()
+            || !element.rotation.is_finite()
+        {
+            return Err("As coordenadas do elemento são inválidas.".to_owned());
+        }
     }
     Ok(())
 }
@@ -570,28 +675,22 @@ fn write_bytes_atomically(path: &Path, bytes: &[u8]) -> Result<(), String> {
         .map_err(|error| format!("Não foi possível concluir o salvamento: {error}"))
 }
 
-fn safe_extension(file_name: &str, mime_type: &str) -> String {
-    let from_name = Path::new(file_name)
-        .extension()
-        .and_then(|extension| extension.to_str())
-        .unwrap_or("");
-    if !from_name.is_empty()
-        && from_name.len() <= 8
-        && from_name
-            .chars()
-            .all(|character| character.is_ascii_alphanumeric())
-    {
-        return from_name.to_ascii_lowercase();
-    }
+fn image_extension(mime_type: &str) -> Option<&'static str> {
     match mime_type {
-        "image/png" => "png",
-        "image/jpeg" => "jpg",
-        "image/gif" => "gif",
-        "image/webp" => "webp",
-        "image/svg+xml" => "svg",
-        _ => "img",
+        "image/png" => Some("png"),
+        "image/jpeg" => Some("jpg"),
+        "image/gif" => Some("gif"),
+        "image/webp" => Some("webp"),
+        "image/svg+xml" => Some("svg"),
+        _ => None,
     }
-    .to_owned()
+}
+
+fn valid_asset_file_name(file_name: &str) -> bool {
+    let Some((id, extension)) = file_name.rsplit_once('.') else {
+        return false;
+    };
+    valid_id(id).is_ok() && matches!(extension, "png" | "jpg" | "jpeg" | "gif" | "webp" | "svg")
 }
 
 fn mime_for_extension(extension: &str) -> &'static str {
@@ -711,6 +810,85 @@ mod tests {
         write_json_atomically(&root.join("index.json"), &index).unwrap();
 
         assert!(persistence.list_workspaces().is_err());
+        fs::remove_dir_all(root).expect("remove test directory");
+    }
+
+    #[test]
+    fn deduplicates_assets_and_preserves_them_in_a_portable_workspace() {
+        let (source, source_root) = test_persistence();
+        let workspace = source.create_workspace("Workspace".to_owned()).unwrap();
+        source
+            .create_board(&workspace.id, "Board".to_owned())
+            .unwrap();
+        let bytes = [137, 80, 78, 71];
+        let first = source
+            .add_asset(&workspace.id, "first.png", "image/png", &bytes)
+            .unwrap();
+        let second = source
+            .add_asset(&workspace.id, "renamed.jpg", "image/png", &bytes)
+            .unwrap();
+
+        assert_eq!(first.id, second.id);
+        assert_eq!(
+            fs::read_dir(source.asset_directory(&workspace.id))
+                .unwrap()
+                .count(),
+            1
+        );
+
+        let archive = source.export_workspace(&workspace.id).unwrap();
+        let (destination, destination_root) = test_persistence();
+        let imported = destination.import_workspace(&archive).unwrap();
+
+        assert_eq!(destination.list_boards(&imported.id).unwrap().len(), 1);
+        assert_eq!(
+            destination
+                .read_asset(&imported.id, &first.id)
+                .unwrap()
+                .data_url,
+            first.data_url
+        );
+        fs::remove_dir_all(source_root).expect("remove source test directory");
+        fs::remove_dir_all(destination_root).expect("remove destination test directory");
+    }
+
+    #[test]
+    fn recovers_a_journal_and_migrates_a_legacy_board() {
+        let (persistence, root) = test_persistence();
+        let workspace = persistence
+            .create_workspace("Workspace".to_owned())
+            .unwrap();
+        let mut board = persistence
+            .create_board(&workspace.id, "Board".to_owned())
+            .unwrap();
+        board.schema_version = 0;
+        persistence.write_board(&board).unwrap();
+
+        let migrated = persistence.open_board(&workspace.id, &board.id).unwrap();
+        assert_eq!(migrated.schema_version, BOARD_SCHEMA_VERSION);
+
+        let mut recovered = migrated.clone();
+        recovered.name = "Recovered".to_owned();
+        write_json_atomically(
+            &persistence
+                .journal_path(&workspace.id, &recovered.id)
+                .unwrap(),
+            &recovered,
+        )
+        .unwrap();
+        persistence.recover_journals().unwrap();
+
+        assert_eq!(
+            persistence
+                .open_board(&workspace.id, &recovered.id)
+                .unwrap()
+                .name,
+            "Recovered"
+        );
+        assert!(!persistence
+            .journal_path(&workspace.id, &recovered.id)
+            .unwrap()
+            .exists());
         fs::remove_dir_all(root).expect("remove test directory");
     }
 }

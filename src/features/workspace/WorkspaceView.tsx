@@ -17,12 +17,14 @@ export function WorkspaceView({ workspace, onBack }: { workspace: WorkspaceSumma
   const [error, setError] = useState<string | null>(null);
   const [historyVersion, setHistoryVersion] = useState(0);
   const [assets, setAssets] = useState<Record<string, string>>({});
+  const [isLoadingBoards, setIsLoadingBoards] = useState(true);
   const saveTimer = useRef<number | null>(null);
   const imageInput = useRef<HTMLInputElement>(null);
   const history = useRef<{ past: BoardOperation[]; future: BoardOperation[] }>({ past: [], future: [] });
 
   useEffect(() => {
-    void workspaceApi.listBoards(workspace.id).then(setBoards).catch((reason) => setError(String(reason)));
+    setIsLoadingBoards(true);
+    void workspaceApi.listBoards(workspace.id).then(setBoards).catch((reason) => setError(String(reason))).finally(() => setIsLoadingBoards(false));
   }, [workspace.id]);
 
   useEffect(() => {
@@ -124,6 +126,20 @@ export function WorkspaceView({ workspace, onBack }: { workspace: WorkspaceSumma
     setHistoryVersion((version) => version + 1);
   }
 
+  async function saveNow() {
+    if (!board) return;
+    if (saveTimer.current) window.clearTimeout(saveTimer.current);
+    try { setBoard(await workspaceApi.saveBoard(board)); } catch (reason) { setError(String(reason)); }
+  }
+
+  useEffect(() => {
+    function handleSave(event: KeyboardEvent) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") { event.preventDefault(); void saveNow(); }
+    }
+    window.addEventListener("keydown", handleSave);
+    return () => window.removeEventListener("keydown", handleSave);
+  });
+
   async function addImage(file: File) {
     if (!board) return;
     try {
@@ -148,12 +164,14 @@ export function WorkspaceView({ workspace, onBack }: { workspace: WorkspaceSumma
         <div className={styles.workspaceTitle}><span>{workspace.name.slice(0, 1).toUpperCase()}</span><strong>{workspace.name}</strong></div>
         <div className={styles.boardsHeader}><span>Boards</span><FilePlus2 size={16} /></div>
         <form className={styles.newBoard} onSubmit={createBoard}>
-          <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome do board" maxLength={120} />
+          <input aria-label="Nome do novo board" value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome do board" maxLength={120} />
           <button type="submit" disabled={!name.trim()} aria-label="Criar board"><Plus size={16} /></button>
         </form>
         <nav className={styles.boardList} aria-label="Boards">
           {boards.map((item) => <button key={item.id} className={item.id === board?.id ? styles.boardActive : ""} type="button" onClick={() => void openBoard(item.id)}><PanelLeft size={15} /> {item.name}</button>)}
         </nav>
+        {isLoadingBoards && <p className={styles.sidebarStatus}>Carregando boards...</p>}
+        {!isLoadingBoards && boards.length === 0 && <p className={styles.sidebarStatus}>Nenhum board ainda.</p>}
       </aside>
       <section className={styles.main}>
         <header className={styles.topbar}>
@@ -168,7 +186,7 @@ export function WorkspaceView({ workspace, onBack }: { workspace: WorkspaceSumma
           </div>
         </header>
         <input ref={imageInput} className={styles.hiddenInput} type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addImage(file); event.currentTarget.value = ""; }} />
-        {error && <p className={styles.error}>{error}</p>}
+        {error && <p className={styles.error} role="alert">{error}</p>}
         {board ? <Canvas board={board} onChange={setBoard} onCommit={commitBoard} onUndo={undo} onRedo={redo} canUndo={history.current.past.length > 0} canRedo={history.current.future.length > 0} assets={assets} /> : <div className={styles.blank}>Crie um board para começar.</div>}
       </section>
     </main>

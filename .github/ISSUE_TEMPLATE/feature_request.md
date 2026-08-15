@@ -6,22 +6,40 @@ labels: enhancement
 assignees: ""
 ---
 
-## Problem Or Workflow
+## Problem Or Workflow / Problema Ou Fluxo
 
-What problem are you trying to solve?
+What user workflow or pain point should LogLine improve?
 
-## Proposed Direction
+## Proposed Outcome / Resultado Proposto
 
-Describe the behavior you would like.
+Describe the desired behavior, not only an implementation idea.
 
-## Local-First Considerations
+## Acceptance Criteria / Critérios De Aceite
 
-Explain any effect on local data, offline usage, export/import, or compatibility.
+How would a contributor and reviewer know the feature is complete?
 
-## Alternatives Considered
+- [ ]
+- [ ]
+- [ ]
 
-What other approaches did you consider?
+## Project Phase / Fase Do Projeto
 
-## Additional Context
+- [ ] Phase 3: assets, import/export, and recovery
+- [ ] Phase 4: quality, tests, accessibility, packaging, or release polish
+- [ ] Other or future phase
 
-Add sketches, screenshots, or examples if helpful.
+Explain why this work fits the selected phase:
+
+## Local-First And Data Impact / Impacto Local-First E Em Dados
+
+- Does this require network access, an account, telemetry, or synchronization?
+- Does this affect local workspaces, boards, assets, imports, exports, or schemas?
+- Are migration, recovery, privacy, or compatibility concerns expected?
+
+## Alternatives Considered / Alternativas Consideradas
+
+What other workflows or solutions did you consider?
+
+## Additional Context / Contexto Adicional
+
+Add sketches, screenshots, examples, or related issues if helpful.

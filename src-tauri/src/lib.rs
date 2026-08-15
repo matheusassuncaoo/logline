@@ -3,7 +3,7 @@ mod persistence;
 
 use domain::{AssetData, Board, BoardSummary, WorkspaceSummary};
 use persistence::{validate_name, Persistence};
-use std::sync::Mutex;
+use std::{fs, sync::Mutex};
 use tauri::{Manager, State};
 
 struct AppState {
@@ -176,6 +176,14 @@ fn import_workspace(
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
+            let log_directory = app.path().app_log_dir()?;
+            fs::create_dir_all(&log_directory)?;
+            let log_writer = tracing_appender::rolling::daily(log_directory, "logline");
+            let _ = tracing_subscriber::fmt()
+                .with_ansi(false)
+                .with_writer(log_writer)
+                .try_init();
+            tracing::info!("LogLine initialized");
             let persistence = Persistence::new(app.handle()).map_err(std::io::Error::other)?;
             app.manage(AppState {
                 persistence: Mutex::new(persistence),

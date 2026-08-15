@@ -1,5 +1,5 @@
 import { PointerEvent, WheelEvent, useEffect, useRef, useState, type ReactNode } from "react";
-import { BringToFront, Copy, Frame, GitBranch, Grid3X3, MousePointer2, Pencil, Redo2, Square, StickyNote, Trash2, Type, Undo2 } from "lucide-react";
+import { BringToFront, ChevronDown, ChevronUp, Copy, Frame, GitBranch, Grid3X3, MousePointer2, Pencil, Redo2, SendToBack, Square, StickyNote, Trash2, Type, Undo2 } from "lucide-react";
 import { nanoid } from "nanoid";
 import type { Board, CanvasElement, CanvasElementKind } from "../../lib/types";
 import styles from "./Canvas.module.css";
@@ -43,6 +43,7 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
   const spacePressed = useRef(false);
   const clipboard = useRef<CanvasElement[]>([]);
   const textEditBefore = useRef<Record<string, Board>>({});
+  const textEditAfter = useRef<Record<string, Board>>({});
   boardRef.current = board;
 
   useEffect(() => {
@@ -70,6 +71,7 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
       if (event.key === "n") addElement("sticky-note");
       if (event.key === "t") addElement("text");
       if (event.key === "r") addElement("shape");
+      if (event.key === "Escape") { setSelectedIds([]); setTool("select"); }
     }
     function handleKeyUp(event: KeyboardEvent) { if (event.code === "Space") spacePressed.current = false; }
     window.addEventListener("keydown", handleKeyDown);
@@ -113,6 +115,7 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
   function updateElement(id: string, update: Partial<CanvasElement>, commit = false) {
     const before = boardRef.current;
     const next = replaceElements((elements) => ({ ...elements, [id]: { ...elements[id], ...update } }));
+    if (textEditBefore.current[id]) textEditAfter.current[id] = next;
     if (commit) onCommit(before, next); else onChange(next);
   }
 
@@ -122,8 +125,10 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
 
   function completeTextEdit(id: string) {
     const before = textEditBefore.current[id];
+    const next = textEditAfter.current[id] ?? boardRef.current;
     delete textEditBefore.current[id];
-    if (before) onCommit(before, boardRef.current);
+    delete textEditAfter.current[id];
+    if (before) onCommit(before, next);
   }
 
   function deleteSelected() {
@@ -162,8 +167,44 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
     const current = boardRef.current;
     if (!selectedIds.length) return;
     const selected = new Set(selectedIds);
-    const next = { ...current, elementOrder: [...current.elementOrder.filter((id) => !selected.has(id)), ...selectedIds] };
+    const selectedOrder = current.elementOrder.filter((id) => selected.has(id));
+    const next = { ...current, elementOrder: [...current.elementOrder.filter((id) => !selected.has(id)), ...selectedOrder] };
     onCommit(current, next);
+  }
+
+  function sendToBack() {
+    const current = boardRef.current;
+    if (!selectedIds.length) return;
+    const selected = new Set(selectedIds);
+    const selectedOrder = current.elementOrder.filter((id) => selected.has(id));
+    const next = { ...current, elementOrder: [...selectedOrder, ...current.elementOrder.filter((id) => !selected.has(id))] };
+    onCommit(current, next);
+  }
+
+  function bringForward() {
+    const current = boardRef.current;
+    if (!selectedIds.length) return;
+    const selected = new Set(selectedIds);
+    const order = [...current.elementOrder];
+    for (let index = order.length - 2; index >= 0; index -= 1) {
+      if (selected.has(order[index]) && !selected.has(order[index + 1])) {
+        [order[index], order[index + 1]] = [order[index + 1], order[index]];
+      }
+    }
+    onCommit(current, { ...current, elementOrder: order });
+  }
+
+  function sendBackward() {
+    const current = boardRef.current;
+    if (!selectedIds.length) return;
+    const selected = new Set(selectedIds);
+    const order = [...current.elementOrder];
+    for (let index = 1; index < order.length; index += 1) {
+      if (selected.has(order[index]) && !selected.has(order[index - 1])) {
+        [order[index], order[index - 1]] = [order[index - 1], order[index]];
+      }
+    }
+    onCommit(current, { ...current, elementOrder: order });
   }
 
   function groupSelected() {
@@ -324,6 +365,7 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
   }
 
   const single = selectedIds.length === 1 ? board.elements[selectedIds[0]] : null;
+  const visibleElementIds = visibleElements(board, viewport, svgRef.current?.getBoundingClientRect(), selectedIds);
   return (
     <section className={styles.canvasShell}>
       <div className={styles.toolbar}>
@@ -339,19 +381,22 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
         <ToolButton label="Desfazer" disabled={!canUndo} onClick={onUndo}><Undo2 size={17} /></ToolButton>
         <ToolButton label="Refazer" disabled={!canRedo} onClick={onRedo}><Redo2 size={17} /></ToolButton>
         <ToolButton label="Duplicar" disabled={!selectedIds.length} onClick={duplicateSelected}><Copy size={17} /></ToolButton>
+        <ToolButton label="Enviar para trás" disabled={!selectedIds.length} onClick={sendToBack}><SendToBack size={17} /></ToolButton>
+        <ToolButton label="Enviar para trás uma camada" disabled={!selectedIds.length} onClick={sendBackward}><ChevronDown size={17} /></ToolButton>
+        <ToolButton label="Trazer para frente uma camada" disabled={!selectedIds.length} onClick={bringForward}><ChevronUp size={17} /></ToolButton>
         <ToolButton label="Trazer para frente" disabled={!selectedIds.length} onClick={bringToFront}><BringToFront size={17} /></ToolButton>
         <ToolButton label="Agrupar" disabled={selectedIds.length < 2} onClick={groupSelected}>G</ToolButton>
         <ToolButton label="Desagrupar" disabled={!selectedIds.some((id) => board.elements[id]?.groupId)} onClick={ungroupSelected}>U</ToolButton>
         <ToolButton label="Excluir" disabled={!selectedIds.length} onClick={deleteSelected}><Trash2 size={17} /></ToolButton>
       </div>
-      <svg ref={svgRef} className={styles.canvas} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={finishInteraction} onPointerCancel={finishInteraction} onWheel={handleWheel}>
+      <svg ref={svgRef} className={styles.canvas} tabIndex={0} role="application" aria-label="Canvas do board. Use as ferramentas e atalhos de teclado para editar." onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={finishInteraction} onPointerCancel={finishInteraction} onWheel={handleWheel}>
         <defs>
           <pattern id="dot-grid" width="24" height="24" patternUnits="userSpaceOnUse" patternTransform={`translate(${viewport.x} ${viewport.y}) scale(${viewport.zoom})`}><circle cx="1" cy="1" r="1" fill="#d8ddd7" /></pattern>
           <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 Z" fill="#52645b" /></marker>
         </defs>
         {showGrid && <rect width="100%" height="100%" fill="url(#dot-grid)" />}
         <g transform={`translate(${viewport.x} ${viewport.y}) scale(${viewport.zoom})`}>
-          {board.elementOrder.map((id) => <CanvasElementView key={id} element={board.elements[id]} selected={selectedIds.includes(id)} onPointerDown={handleElementPointerDown} onTextChange={updateElement} onTextFocus={beginTextEdit} onTextBlur={completeTextEdit} assets={assets} />)}
+          {visibleElementIds.map((id) => <CanvasElementView key={id} element={board.elements[id]} selected={selectedIds.includes(id)} onPointerDown={handleElementPointerDown} onTextChange={updateElement} onTextFocus={beginTextEdit} onTextBlur={completeTextEdit} assets={assets} />)}
           {single && single.kind !== "connector" && single.kind !== "freehand" && <SelectionHandles element={single} onResize={startResize} onRotate={startRotate} />}
           {marquee && <rect className={styles.marquee} x={Math.min(marquee.start.x, marquee.end.x)} y={Math.min(marquee.start.y, marquee.end.y)} width={Math.abs(marquee.end.x - marquee.start.x)} height={Math.abs(marquee.end.y - marquee.start.y)} />}
         </g>
@@ -389,3 +434,18 @@ function angle(center: Point, point: Point) { return Math.atan2(point.y - center
 function intersects(start: Point, end: Point, element: CanvasElement) { const left = Math.min(start.x, end.x); const right = Math.max(start.x, end.x); const top = Math.min(start.y, end.y); const bottom = Math.max(start.y, end.y); return element.x < right && element.x + Math.abs(element.width) > left && element.y < bottom && element.y + Math.abs(element.height) > top; }
 function isTextInput(target: EventTarget | null) { return target instanceof HTMLTextAreaElement || target instanceof HTMLInputElement || (target instanceof HTMLElement && target.isContentEditable); }
 function freehandPoints(content: string) { try { return (JSON.parse(content) as Point[]).map((point) => `${point.x},${point.y}`).join(" "); } catch { return ""; } }
+
+function visibleElements(board: Board, viewport: Viewport, rect: DOMRect | undefined, selectedIds: string[]) {
+  if (!rect) return board.elementOrder;
+  const padding = 240 / viewport.zoom;
+  const left = -viewport.x / viewport.zoom - padding;
+  const top = -viewport.y / viewport.zoom - padding;
+  const right = (rect.width - viewport.x) / viewport.zoom + padding;
+  const bottom = (rect.height - viewport.y) / viewport.zoom + padding;
+  const selected = new Set(selectedIds);
+  return board.elementOrder.filter((id) => {
+    const element = board.elements[id];
+    if (!element || selected.has(id) || element.kind === "connector" || element.kind === "freehand") return true;
+    return element.x < right && element.x + Math.abs(element.width) > left && element.y < bottom && element.y + Math.abs(element.height) > top;
+  });
+}
