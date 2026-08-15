@@ -1,7 +1,7 @@
 mod domain;
 mod persistence;
 
-use domain::{Board, BoardSummary, WorkspaceSummary};
+use domain::{AssetData, Board, BoardSummary, WorkspaceSummary};
 use persistence::{validate_name, Persistence};
 use std::sync::Mutex;
 use tauri::{Manager, State};
@@ -79,10 +79,59 @@ fn save_board(board: Board, state: State<'_, AppState>) -> Result<Board, String>
         .save_board(board)
 }
 
+#[tauri::command]
+fn add_asset(
+    workspace_id: String,
+    file_name: String,
+    mime_type: String,
+    bytes: Vec<u8>,
+    state: State<'_, AppState>,
+) -> Result<AssetData, String> {
+    state
+        .persistence
+        .lock()
+        .map_err(|_| "O armazenamento está indisponível.".to_owned())?
+        .add_asset(&workspace_id, &file_name, &mime_type, &bytes)
+}
+
+#[tauri::command]
+fn read_asset(
+    workspace_id: String,
+    asset_id: String,
+    state: State<'_, AppState>,
+) -> Result<AssetData, String> {
+    state
+        .persistence
+        .lock()
+        .map_err(|_| "O armazenamento está indisponível.".to_owned())?
+        .read_asset(&workspace_id, &asset_id)
+}
+
+#[tauri::command]
+fn export_workspace(workspace_id: String, state: State<'_, AppState>) -> Result<Vec<u8>, String> {
+    state
+        .persistence
+        .lock()
+        .map_err(|_| "O armazenamento está indisponível.".to_owned())?
+        .export_workspace(&workspace_id)
+}
+
+#[tauri::command]
+fn import_workspace(
+    bytes: Vec<u8>,
+    state: State<'_, AppState>,
+) -> Result<WorkspaceSummary, String> {
+    state
+        .persistence
+        .lock()
+        .map_err(|_| "O armazenamento está indisponível.".to_owned())?
+        .import_workspace(&bytes)
+}
+
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
-            let persistence = Persistence::new(&app.handle()).map_err(std::io::Error::other)?;
+            let persistence = Persistence::new(app.handle()).map_err(std::io::Error::other)?;
             app.manage(AppState {
                 persistence: Mutex::new(persistence),
             });
@@ -94,7 +143,11 @@ pub fn run() {
             create_board,
             list_boards,
             open_board,
-            save_board
+            save_board,
+            add_asset,
+            read_asset,
+            export_workspace,
+            import_workspace
         ])
         .run(tauri::generate_context!())
         .expect("error while running LogLine");

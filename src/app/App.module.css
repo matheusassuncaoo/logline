@@ -2,6 +2,10 @@
 .header { height: 64px; padding: 0 5vw; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); background: color-mix(in srgb, var(--surface-raised) 92%, transparent); }
 .brand { font-size: 1.15rem; font-weight: 750; letter-spacing: -0.06em; }
 .status { display: flex; gap: 8px; align-items: center; color: var(--text-secondary); font-size: 0.78rem; }
+.headerActions { display: flex; gap: 14px; align-items: center; }
+.headerActions button { display: inline-flex; gap: 6px; align-items: center; padding: 6px 8px; border: 1px solid var(--border-subtle); border-radius: 6px; background: var(--surface-raised); color: var(--text-secondary); font-size: 0.72rem; cursor: pointer; }
+.headerActions button:hover { color: var(--accent-primary); border-color: var(--accent-primary); }
+.hiddenInput { display: none; }
 .status span { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-positive); }
 .content { width: min(1080px, 90vw); margin: 0 auto; padding: clamp(72px, 12vh, 140px) 0 80px; }
 .intro { max-width: 650px; }

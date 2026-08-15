@@ -10,9 +10,17 @@ LogLine is the official project name.
 
 LogLine is an early-stage offline-first desktop whiteboard built with Tauri, Rust, React, TypeScript, Vite, and Zustand.
 
-The current product is not a complete canvas editor yet. The implemented foundation includes a desktop shell, workspace creation/listing, board domain types, and local JSON persistence for workspaces and boards.
+The current product includes a functional canvas MVP, but it is not a complete production-grade whiteboard editor yet. The implemented foundation includes the desktop shell, workspace creation/listing, board creation/listing/opening, SVG canvas editing, local autosave, and local JSON persistence for workspaces and boards.
 
-O LogLine ainda nao e um editor de canvas completo. A base implementada inclui o shell desktop, criacao/listagem de workspaces, tipos de dominio para boards e persistencia local em JSON.
+O LogLine ja inclui um MVP funcional de canvas, mas ainda nao e um editor de whiteboard completo em nivel de producao. A base implementada inclui shell desktop, criacao/listagem de workspaces, criacao/listagem/abertura de boards, edicao em canvas SVG, autosave local e persistencia local em JSON.
+
+## Project Phases
+
+- Phase 0: Desktop/local-first foundation. Implemented.
+- Phase 1: Workspaces and boards. Implemented as MVP.
+- Phase 2: Canvas MVP. Implemented as MVP.
+- Phase 3: Assets, export, and recovery flows. Local image and export MVP implemented; import UI is still planned.
+- Phase 4: Quality, tests, accessibility, packaging, and release polish. Planned.
 
 ## Working Rules
 
@@ -21,6 +29,7 @@ O LogLine ainda nao e um editor de canvas completo. A base implementada inclui o
 - Preserve the local-first/offline-first direction.
 - Keep frontend types aligned with Rust domain structs.
 - Keep Tauri command names stable unless the related frontend calls are updated in the same change.
+- Do not document backend-only groundwork as an end-user feature until it has frontend/Tauri command support.
 - Do not add compatibility layers without a concrete need.
 - Do not commit generated folders such as `node_modules`, `dist`, or `src-tauri/target`.
 - Do not commit `.env` files or secrets.
@@ -28,7 +37,10 @@ O LogLine ainda nao e um editor de canvas completo. A base implementada inclui o
 ## Architecture Notes
 
 - Frontend entry: `src/main.tsx`.
-- App shell: `src/app/App.tsx`.
+- App shell and workspace landing: `src/app/App.tsx`.
+- Workspace board UI: `src/features/workspace/WorkspaceView.tsx`.
+- Canvas MVP: `src/features/canvas/Canvas.tsx`.
+- Canvas styles: `src/features/canvas/Canvas.module.css`.
 - Frontend Tauri wrapper: `src/lib/tauri.ts`.
 - Frontend shared types: `src/lib/types.ts`.
 - Workspace state: `src/stores/workspaceStore.ts`.
@@ -36,13 +48,23 @@ O LogLine ainda nao e um editor de canvas completo. A base implementada inclui o
 - Rust domain types: `src-tauri/src/domain.rs`.
 - Local persistence: `src-tauri/src/persistence.rs`.
 
+## Canvas Rules
+
+- Canvas interactions currently live mostly in `Canvas.tsx`; keep changes focused unless a split clearly improves maintainability.
+- Preserve selection, undo/redo, autosave, and commit behavior when changing element operations.
+- Do not break existing element kinds: `sticky-note`, `text`, `shape`, `connector`, `frame`, `freehand`, and the reserved `image` kind.
+- Keep image additions connected to local asset persistence and the active board state.
+- Keyboard shortcuts should not interfere with text inputs.
+
 ## Persistence Rules
 
 - Workspace and board data are stored locally through the Rust backend.
 - Board data is serialized as JSON.
 - Writes should remain atomic where possible.
+- Journal recovery exists in the persistence layer and should not be removed casually.
 - Validate IDs and names before writing data.
 - Respect schema version fields when changing persisted structures.
+- Image assets and export commands are exposed through the frontend; workspace import remains backend-only.
 
 ## Commands
 

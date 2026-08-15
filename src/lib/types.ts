@@ -18,12 +18,18 @@ export type CanvasElement = {
   rotation: number;
   content: string;
   color: string;
+  groupId?: string;
 };
 
 export type BoardSummary = {
   id: string;
   name: string;
   updatedAt: number;
+};
+
+export type AssetData = {
+  id: string;
+  dataUrl: string;
 };
 
 export type Board = {

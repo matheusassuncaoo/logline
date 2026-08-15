@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Board, BoardSummary, WorkspaceSummary } from "./types";
+import type { AssetData, Board, BoardSummary, WorkspaceSummary } from "./types";
 
 export const workspaceApi = {
   list: () => invoke<WorkspaceSummary[]>("list_workspaces"),
@@ -10,4 +10,9 @@ export const workspaceApi = {
   openBoard: (workspaceId: string, boardId: string) =>
     invoke<Board>("open_board", { workspaceId, boardId }),
   saveBoard: (board: Board) => invoke<Board>("save_board", { board }),
+  addAsset: (workspaceId: string, file: File, bytes: Uint8Array) =>
+    invoke<AssetData>("add_asset", { workspaceId, fileName: file.name, mimeType: file.type, bytes: Array.from(bytes) }),
+  readAsset: (workspaceId: string, assetId: string) => invoke<AssetData>("read_asset", { workspaceId, assetId }),
+  exportWorkspace: (workspaceId: string) => invoke<number[]>("export_workspace", { workspaceId }),
+  importWorkspace: (bytes: Uint8Array) => invoke<WorkspaceSummary>("import_workspace", { bytes: Array.from(bytes) }),
 };

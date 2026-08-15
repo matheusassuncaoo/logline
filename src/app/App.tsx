@@ -1,5 +1,6 @@
-import { FormEvent, useEffect, useState } from "react";
-import { ArrowUpRight, Plus, Search } from "lucide-react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { ArrowUpRight, Plus, Search, Upload } from "lucide-react";
+import { workspaceApi } from "../lib/tauri";
 import { WorkspaceView } from "../features/workspace/WorkspaceView";
 import type { WorkspaceSummary } from "../lib/types";
 import { useWorkspaceStore } from "../stores/workspaceStore";
@@ -10,6 +11,8 @@ export function App() {
   const [name, setName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [selectedWorkspace, setSelectedWorkspace] = useState<WorkspaceSummary | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const importInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     void load();
@@ -28,14 +31,24 @@ export function App() {
     }
   }
 
+  async function importWorkspace(file: File) {
+    try {
+      setImportError(null);
+      const workspace = await workspaceApi.importWorkspace(new Uint8Array(await file.arrayBuffer()));
+      await load();
+      setSelectedWorkspace(workspace);
+    } catch (reason) { setImportError(String(reason)); }
+  }
+
   if (selectedWorkspace) return <WorkspaceView workspace={selectedWorkspace} onBack={() => setSelectedWorkspace(null)} />;
 
   return (
     <main className={styles.shell}>
       <header className={styles.header}>
         <div className={styles.brand}>LogLine</div>
-        <div className={styles.status}><span /> Local-first workspace</div>
+        <div className={styles.headerActions}><button type="button" onClick={() => importInput.current?.click()}><Upload size={15} /> Importar</button><div className={styles.status}><span /> Local-first workspace</div></div>
       </header>
+      <input ref={importInput} className={styles.hiddenInput} type="file" accept=".logline,application/zip" onChange={(event) => { const file = event.target.files?.[0]; if (file) void importWorkspace(file); event.currentTarget.value = ""; }} />
       <section className={styles.content}>
         <div className={styles.intro}>
           <p className={styles.eyebrow}>Whiteboards sem dependência de rede</p>
@@ -55,6 +68,7 @@ export function App() {
         </div>
         {isLoading && <p className={styles.muted}>Abrindo armazenamento local...</p>}
         {error && <p className={styles.error}>{error}</p>}
+        {importError && <p className={styles.error}>{importError}</p>}
         {!isLoading && !error && workspaces.length === 0 && (
           <div className={styles.empty}>Seu primeiro board está a um workspace de distância.</div>
         )}

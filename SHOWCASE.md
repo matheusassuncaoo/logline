@@ -16,21 +16,41 @@ LogLine e um whiteboard desktop offline-first para pessoas que querem organizar 
 
 ## Current MVP
 
-The current version focuses on the foundation:
+The current MVP already includes the first usable editing loop:
 
 - Create local workspaces.
-- List existing workspaces.
-- Store workspace and board data locally.
-- Keep board data represented with a structured schema.
-- Provide a Tauri desktop shell ready for future whiteboard interactions.
+- Create, list, and open boards inside a workspace.
+- Edit boards on an SVG canvas.
+- Add sticky notes, text, shapes, frames, connectors, and freehand drawings.
+- Select, move, resize, rotate, duplicate, delete, group, and reorder elements.
+- Use undo/redo during an active board session.
+- Save board changes locally with autosave.
 
-A versao atual foca na base:
+O MVP atual ja inclui o primeiro ciclo utilizavel de edicao:
 
 - Criar workspaces locais.
-- Listar workspaces existentes.
-- Salvar dados de workspaces e boards localmente.
-- Representar dados de board com schema estruturado.
-- Fornecer um shell desktop Tauri pronto para futuras interacoes de whiteboard.
+- Criar, listar e abrir boards dentro de um workspace.
+- Editar boards em um canvas SVG.
+- Adicionar sticky notes, texto, formas, frames, conectores e desenho livre.
+- Selecionar, mover, redimensionar, rotacionar, duplicar, excluir, agrupar e reordenar elementos.
+- Usar undo/redo durante uma sessao de board ativa.
+- Salvar alteracoes localmente com autosave.
+
+## Product Phases
+
+- Phase 0: Desktop/local-first foundation. Tauri shell, Rust persistence, workspace schema, board schema, and atomic writes.
+- Phase 1: Workspaces and boards. Workspace landing screen, workspace view, board creation, board listing, and board opening.
+- Phase 2: Canvas MVP. SVG canvas, editing tools, element operations, undo/redo, and local autosave.
+- Phase 3: Assets, import/export, and recovery. Backend groundwork exists; user-facing flows are still planned.
+- Phase 4: Quality and release readiness. Tests, accessibility, responsive polish, packaging, signed builds, and release automation.
+
+## Fases Do Produto
+
+- Fase 0: Fundacao desktop/local-first. Shell Tauri, persistencia Rust, schema de workspace, schema de board e escrita atomica.
+- Fase 1: Workspaces e boards. Tela inicial de workspaces, tela de workspace, criacao de boards, listagem de boards e abertura de boards.
+- Fase 2: Canvas MVP. Canvas SVG, ferramentas de edicao, operacoes em elementos, undo/redo e autosave local.
+- Fase 3: Assets, importacao/exportacao e recuperacao. A base backend existe; os fluxos visuais para usuario ainda estao planejados.
+- Fase 4: Qualidade e preparo para release. Testes, acessibilidade, refinamento responsivo, empacotamento, builds assinados e automacao de releases.
 
 ## Product Principles
 
@@ -47,9 +67,9 @@ Screenshots are not included yet.
 When screenshots are added, prefer:
 
 - Workspace landing screen.
-- Empty workspace state.
-- Board editor view.
-- Canvas with notes, shapes, connectors, and frames.
+- Workspace board list.
+- Board editor with the toolbar visible.
+- Canvas with notes, shapes, connectors, frames, and freehand drawings.
 - Packaged desktop window on supported operating systems.
 
 ## Roadmap Ideas
@@ -58,29 +78,25 @@ These are product directions, not promises of completed features.
 
 Estas sao direcoes de produto, nao promessas de funcionalidades prontas.
 
-- Workspace navigation.
-- Board creation UI.
-- Infinite or large canvas editor.
-- Sticky notes and text blocks.
-- Shapes and frames.
-- Connectors and relationship mapping.
-- Freehand drawing.
-- Image support.
+- Image asset UI.
+- Workspace import/export UI for portable `.logline` files.
+- Visible recovery and backup flows.
 - Search inside boards.
-- Import/export.
-- Local backup and recovery.
-- Keyboard shortcuts.
+- More precise connector behavior.
+- Better text editing and element inspectors.
+- Keyboard shortcut reference.
 - Accessibility improvements.
+- Automated tests.
 - Packaged releases.
 
 ## Portfolio Summary
 
-LogLine demonstrates a pragmatic desktop application architecture with React and Tauri, using Rust for local persistence and TypeScript for the user interface.
+LogLine demonstrates a pragmatic desktop application architecture with React and Tauri, using Rust for local persistence and TypeScript for the user interface. The current codebase now includes a functional SVG canvas MVP instead of only a persistence foundation.
 
-O LogLine demonstra uma arquitetura desktop pragmatica com React e Tauri, usando Rust para persistencia local e TypeScript para a interface.
+O LogLine demonstra uma arquitetura desktop pragmatica com React e Tauri, usando Rust para persistencia local e TypeScript para a interface. O codigo atual ja inclui um MVP funcional de canvas SVG, nao apenas uma base de persistencia.
 
 ## Short Description
 
-EN: LogLine is an offline-first desktop whiteboard foundation for organizing local workspaces, boards, flows, maps, and decisions.
+EN: LogLine is an offline-first desktop whiteboard MVP for organizing local workspaces, boards, flows, maps, and decisions.
 
-PT: LogLine e uma base de whiteboard desktop offline-first para organizar workspaces, boards, fluxos, mapas e decisoes localmente.
+PT: LogLine e um MVP de whiteboard desktop offline-first para organizar workspaces, boards, fluxos, mapas e decisoes localmente.
