@@ -23,12 +23,13 @@ Current implementation:
 - Local JSON persistence for workspaces and boards.
 - Rust persistence for journals, assets, and portable workspace import/export.
 - User-facing workspace import.
+- Vitest coverage for SVG export and Rust tests for persistence flows.
 
 Not fully implemented yet:
 
 - Production-grade board editor polish.
 - Visible backup/recovery flows.
-- Automated tests.
+- Expanded automated test coverage.
 - Accessibility pass.
 - Release packaging and signed builds.
 
@@ -38,13 +39,14 @@ Not fully implemented yet:
 - Phase 1: Workspaces and boards. Implemented as MVP.
 - Phase 2: Canvas MVP. Implemented as MVP.
 - Phase 3: Assets, import/export, and recovery flows. Local MVP implemented.
-- Phase 4: Quality, tests, accessibility, packaging, and release polish. Planned.
+- Phase 4: Test coverage, accessibility, packaging, and release polish. Planned.
 
 ## Commands
 
 ```sh
 npm install
 npm run dev
+npm test
 npm run tauri dev
 npm run build
 npm run tauri build
@@ -59,6 +61,7 @@ npm run tauri build
 - `src/features/canvas/Canvas.tsx`: SVG canvas MVP, tools, interactions, element rendering.
 - `src/features/canvas/Canvas.module.css`: canvas and element styling.
 - `src/lib/types.ts`: frontend domain types.
+- `src/lib/export.test.ts`: Vitest coverage for SVG export.
 - `src/lib/tauri.ts`: frontend API calls to Tauri commands.
 - `src/stores/workspaceStore.ts`: workspace state management.
 - `src-tauri/src/domain.rs`: Rust domain types.
@@ -96,6 +99,7 @@ npm run tauri build
 Check the relevant items:
 
 - Did the frontend still build with `npm run build`?
+- Did relevant frontend tests pass with `npm test`?
 - Did Tauri command names remain aligned between Rust and TypeScript?
 - Did persisted data validation remain intact?
 - Did canvas history/autosave behavior remain intact?

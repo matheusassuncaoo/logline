@@ -56,7 +56,7 @@ Import portable `.logline` workspace files through the workspace landing screen.
 | 1 | Workspaces and boards | MVP implemented |
 | 2 | Canvas editor | MVP implemented |
 | 3 | Assets, import/export, and recovery | Local MVP implemented |
-| 4 | Tests, accessibility, packaging, and release polish | Planned |
+| 4 | Test coverage, accessibility, packaging, and release polish | Planned |
 
 These phases describe direction, not release promises.
 
@@ -114,6 +114,22 @@ Build the desktop application:
 npm run tauri build
 ```
 
+## Testing
+
+Run frontend tests:
+
+```sh
+npm test
+```
+
+Vitest currently covers SVG export behavior. Rust persistence tests cover board lifecycle operations, journal recovery, asset deduplication, and portable workspace import/export.
+
+Run Rust tests from `src-tauri`:
+
+```sh
+cargo test
+```
+
 ## Keyboard Shortcuts
 
 | Shortcut | Action |
@@ -164,7 +180,7 @@ Contributions are welcome, especially in the current quality and product phases:
 
 - Canvas interaction improvements.
 - Accessibility and responsive behavior.
-- Automated tests.
+- Expanded automated test coverage.
 - Visible recovery and backup flows.
 - Packaging and release automation.
 - Documentation and bug reports.

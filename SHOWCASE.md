@@ -42,7 +42,7 @@ O MVP atual já inclui o primeiro ciclo utilizável de edição:
 - Phase 1: Workspaces and boards. Workspace landing screen, workspace view, board creation, board listing, and board opening.
 - Phase 2: Canvas MVP. SVG canvas, editing tools, element operations, undo/redo, and local autosave.
 - Phase 3: Assets, import/export, and recovery. Local MVP implemented.
-- Phase 4: Quality and release readiness. Tests, accessibility, responsive polish, packaging, signed builds, and release automation.
+- Phase 4: Quality and release readiness. Expanded test coverage, accessibility, responsive polish, packaging, signed builds, and release automation.
 
 ## Fases Do Produto
 
@@ -50,7 +50,7 @@ O MVP atual já inclui o primeiro ciclo utilizável de edição:
 - Fase 1: Workspaces e boards. Tela inicial de workspaces, tela de workspace, criação de boards, listagem de boards e abertura de boards.
 - Fase 2: Canvas MVP. Canvas SVG, ferramentas de edição, operações em elementos, undo/redo e autosave local.
 - Fase 3: Assets, importação/exportação e recuperação. MVP local implementado.
-- Fase 4: Qualidade e preparo para release. Testes, acessibilidade, refinamento responsivo, empacotamento, builds assinados e automação de releases.
+- Fase 4: Qualidade e preparo para release. Ampliação da cobertura de testes, acessibilidade, refinamento responsivo, empacotamento, builds assinados e automação de releases.
 
 ## Product Principles
 
@@ -84,7 +84,7 @@ Estas são direções de produto, não promessas de funcionalidades prontas.
 - Better text editing and element inspectors.
 - Keyboard shortcut reference.
 - Accessibility improvements.
-- Automated tests.
+- Expanded automated test coverage.
 - Packaged releases.
 
 ## Portfolio Summary

@@ -20,7 +20,7 @@ O LogLine já inclui um MVP funcional de canvas, mas ainda não é um editor de 
 - Phase 1: Workspaces and boards. Implemented as MVP.
 - Phase 2: Canvas MVP. Implemented as MVP.
 - Phase 3: Assets, import/export, and recovery flows. Local MVP implemented.
-- Phase 4: Quality, tests, accessibility, packaging, and release polish. Planned.
+- Phase 4: Test coverage, accessibility, packaging, and release polish. Planned.
 
 ## Working Rules
 
@@ -92,6 +92,12 @@ Build frontend:
 npm run build
 ```
 
+Run frontend tests:
+
+```sh
+npm test
+```
+
 Build desktop app:
 
 ```sh
@@ -103,6 +109,7 @@ npm run tauri build
 Before completing a code change, run the most relevant available command:
 
 - `npm run build` for frontend/type changes.
+- `npm test` when changing tested frontend behavior or export logic.
 - `npm run tauri build` for full desktop build changes, when feasible.
 - Rust checks from `src-tauri` when backend-only changes are made.
 

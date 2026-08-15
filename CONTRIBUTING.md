@@ -36,7 +36,7 @@ O LogLine é um whiteboard desktop offline-first em fase inicial. As contribuiç
 | 1 | Workspaces and boards | MVP implemented |
 | 2 | Canvas editor | MVP implemented |
 | 3 | Assets, import/export, and recovery | Local MVP implemented |
-| 4 | Tests, accessibility, packaging, and release polish | Planned |
+| 4 | Test coverage, accessibility, packaging, and release polish | Planned |
 
 When proposing work, state the phase it supports and why it matters now.
 
@@ -48,7 +48,7 @@ When proposing work, state the phase it supports and why it matters now.
 | 1 | Workspaces e boards | MVP implementado |
 | 2 | Editor de canvas | MVP implementado |
 | 3 | Assets, importação/exportação e recuperação | MVP local implementado |
-| 4 | Testes, acessibilidade, empacotamento e refinamento de release | Planejada |
+| 4 | Cobertura de testes, acessibilidade, empacotamento e refinamento de release | Planejada |
 
 Ao propor uma mudança, informe qual fase ela apoia e por que ela é importante agora.
 
@@ -266,12 +266,12 @@ The canvas MVP is centered in `src/features/canvas/Canvas.tsx`.
 | Change type | Minimum verification |
 | --- | --- |
 | Documentation only | Review rendered Markdown and links |
-| Frontend or TypeScript | `npm run build` |
-| Rust backend only | Relevant Rust check from `src-tauri` when available |
+| Frontend or TypeScript | `npm run build`; run `npm test` when relevant |
+| Rust backend only | `cargo test` from `src-tauri` when relevant |
 | Desktop integration | `npm run tauri build` when feasible |
-| Canvas interaction | Build plus manual interaction verification |
-| Persistence or migration | Build plus manual save, reload, and recovery verification with temporary data |
-| Import/export or assets | Build plus valid, invalid, and boundary-size manual cases |
+| Canvas interaction | Build, relevant tests, and manual interaction verification |
+| Persistence or migration | `cargo test`, build, and manual save, reload, and recovery verification with temporary data |
+| Import/export or assets | `npm test`, `cargo test`, build, and valid, invalid, and boundary-size manual cases |
 
 If a relevant command cannot run, state why in the pull request.
 
@@ -297,6 +297,6 @@ Use the issue templates when the project is hosted publicly.
 
 ## Tests
 
-There is no dedicated automated test suite configured yet. Until one is added, contributors must run the relevant build/check command and document manual verification for changed behavior.
+Automated tests are available through `npm test` for frontend export behavior and `cargo test` in `src-tauri` for persistence flows. Contributors must add or update relevant tests when practical and document manual verification for interactions not covered by automation.
 
-Ainda não existe uma suíte automatizada de testes configurada. Até que ela exista, contribuidores devem executar o build/check relevante e documentar a verificação manual do comportamento alterado.
+Testes automatizados estão disponíveis por `npm test` para o comportamento de exportação do frontend e por `cargo test` em `src-tauri` para fluxos de persistência. Contribuidores devem adicionar ou atualizar testes relevantes quando for prático e documentar a verificação manual de interações não cobertas pela automação.

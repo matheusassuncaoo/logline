@@ -23,14 +23,15 @@
 
 ## Project At A Glance
 
-LogLine is in `0.1.0` and is actively evolving. It already provides a local workspace and board workflow, an SVG canvas MVP, local autosave, undo/redo, image assets, and portable workspace import/export. It is not yet a complete production-grade whiteboard editor.
+LogLine is in `0.1.0` and is actively evolving. It already provides a local workspace and board workflow, an SVG canvas MVP, local autosave, undo/redo, image assets, portable workspace import/export, and automated coverage for export and persistence. It is not yet a complete production-grade whiteboard editor.
 
-O LogLine está na versão `0.1.0` e em evolução ativa. Ele já oferece um fluxo local de workspaces e boards, um MVP de canvas SVG, autosave local, undo/redo, assets de imagem e importação/exportação portátil de workspaces. Ainda não é um editor de whiteboard completo em nível de produção.
+O LogLine está na versão `0.1.0` e em evolução ativa. Ele já oferece um fluxo local de workspaces e boards, um MVP de canvas SVG, autosave local, undo/redo, assets de imagem, importação/exportação portátil de workspaces e cobertura automatizada para exportação e persistência. Ainda não é um editor de whiteboard completo em nível de produção.
 
 ## Quick Start
 
 ```sh
 npm install
+npm test
 npm run tauri dev
 ```
 

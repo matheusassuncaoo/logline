@@ -56,7 +56,7 @@ Importe arquivos portáteis de workspace `.logline` pela tela inicial de workspa
 | 1 | Workspaces e boards | MVP implementado |
 | 2 | Editor de canvas | MVP implementado |
 | 3 | Assets, importação/exportação e recuperação | MVP local implementado |
-| 4 | Testes, acessibilidade, empacotamento e refinamento de release | Planejada |
+| 4 | Cobertura de testes, acessibilidade, empacotamento e refinamento de release | Planejada |
 
 As fases descrevem a direção do projeto, não promessas de release.
 
@@ -114,6 +114,22 @@ Gere o build do aplicativo desktop:
 npm run tauri build
 ```
 
+## Testes
+
+Execute os testes do frontend:
+
+```sh
+npm test
+```
+
+O Vitest cobre atualmente o comportamento de exportação SVG. Os testes Rust de persistência cobrem operações do ciclo de vida dos boards, recuperação por journal, deduplicação de assets e importação/exportação de workspaces portáteis.
+
+Execute os testes Rust a partir de `src-tauri`:
+
+```sh
+cargo test
+```
+
 ## Atalhos De Teclado
 
 | Atalho | Ação |
@@ -164,7 +180,7 @@ Contribuições são bem-vindas, especialmente nas fases atuais de produto e qua
 
 - Melhorias de interação no canvas.
 - Acessibilidade e comportamento responsivo.
-- Testes automatizados.
+- Ampliação da cobertura de testes automatizados.
 - Fluxos visíveis de recuperação e backup.
 - Empacotamento e automação de releases.
 - Documentação e relatos de bugs.

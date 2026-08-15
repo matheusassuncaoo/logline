@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Planned
 
-- Improve accessibility, tests, packaging, and release automation.
+- Improve accessibility, expand test coverage, packaging, and release automation.
 - Continue refining the canvas MVP.
 
 ## [0.1.0] - 2026
