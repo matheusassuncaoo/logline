@@ -85,6 +85,20 @@ pub struct AssetData {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct AppPreferences {
+    pub theme: String,
+}
+
+impl Default for AppPreferences {
+    fn default() -> Self {
+        Self {
+            theme: "system".to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Board {
     pub id: String,
     pub workspace_id: String,

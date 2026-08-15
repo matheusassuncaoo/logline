@@ -1,14 +1,15 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Check, Copy, Download, FilePlus2, ImagePlus, PanelLeft, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, Copy, Download, FilePlus2, ImagePlus, PanelLeft, Pencil, Plus, Settings, Trash2, X } from "lucide-react";
 import { nanoid } from "nanoid";
 import { Canvas } from "../canvas/Canvas";
 import { applyBoardOperation, createBoardOperation, type BoardOperation } from "../../lib/boardOperations";
+import { normalizeElementOrder } from "../../lib/boardOperations";
 import { download, downloadPng, downloadSvg } from "../../lib/export";
 import { workspaceApi } from "../../lib/tauri";
 import type { Board, BoardSummary, CanvasElement, WorkspaceSummary } from "../../lib/types";
 import styles from "./WorkspaceView.module.css";
 
-export function WorkspaceView({ workspace, onBack }: { workspace: WorkspaceSummary; onBack: () => void }) {
+export function WorkspaceView({ workspace, onBack, onOpenSettings }: { workspace: WorkspaceSummary; onBack: () => void; onOpenSettings: () => void }) {
   const [boards, setBoards] = useState<BoardSummary[]>([]);
   const [board, setBoard] = useState<Board | null>(null);
   const [name, setName] = useState("");
@@ -100,12 +101,18 @@ export function WorkspaceView({ workspace, onBack }: { workspace: WorkspaceSumma
   }
 
   function commitBoard(before: Board, next: Board) {
-    const operation = createBoardOperation(before, next);
+    const normalizedBefore = normalizeElementOrder(before);
+    const normalizedNext = normalizeElementOrder(next);
+    const operation = createBoardOperation(normalizedBefore, normalizedNext);
     if (!operation) return;
     history.current.past.push(operation);
     history.current.future = [];
-    setBoard(next);
+    setBoard(normalizedNext);
     setHistoryVersion((version) => version + 1);
+  }
+
+  function changeBoard(next: Board) {
+    setBoard(normalizeElementOrder(next));
   }
 
   function undo() {
@@ -181,13 +188,13 @@ export function WorkspaceView({ workspace, onBack }: { workspace: WorkspaceSumma
           </div>
           <div className={styles.actions}>
             {board && <><button type="button" onClick={() => { setRename(board.name); setIsRenaming(true); }} title="Renomear board"><Pencil size={16} /></button><button type="button" onClick={() => void duplicateBoard()} title="Duplicar board"><Copy size={16} /></button><button type="button" onClick={() => void deleteBoard()} title="Remover board"><Trash2 size={16} /></button><button type="button" onClick={() => imageInput.current?.click()} title="Adicionar imagem"><ImagePlus size={16} /></button><button type="button" onClick={() => downloadSvg(board, assets)} title="Exportar SVG">SVG</button><button type="button" onClick={() => void downloadPng(board, assets).catch((reason) => setError(String(reason)))} title="Exportar PNG">PNG</button></>}
-            <button type="button" onClick={() => void exportPortable()} title="Exportar workspace"><Download size={16} /></button>
+            <button type="button" onClick={onOpenSettings} title="Configuracoes"><Settings size={16} /></button><button type="button" onClick={() => void exportPortable()} title="Exportar workspace"><Download size={16} /></button>
             <span className={styles.saved}>{board ? "Salvamento local ativo" : ""}</span>
           </div>
         </header>
         <input ref={imageInput} className={styles.hiddenInput} type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" onChange={(event) => { const file = event.target.files?.[0]; if (file) void addImage(file); event.currentTarget.value = ""; }} />
         {error && <p className={styles.error} role="alert">{error}</p>}
-        {board ? <Canvas board={board} onChange={setBoard} onCommit={commitBoard} onUndo={undo} onRedo={redo} canUndo={history.current.past.length > 0} canRedo={history.current.future.length > 0} assets={assets} /> : <div className={styles.blank}>Crie um board para começar.</div>}
+        {board ? <Canvas board={board} onChange={changeBoard} onCommit={commitBoard} onUndo={undo} onRedo={redo} canUndo={history.current.past.length > 0} canRedo={history.current.future.length > 0} assets={assets} /> : <div className={styles.blank}>Crie um board para começar.</div>}
       </section>
     </main>
   );

@@ -10,7 +10,22 @@ export type BoardOperation = {
   redo: BoardPatch;
 };
 
+export function normalizeElementOrder(board: Board): Board {
+  const seen = new Set<string>();
+  const elementOrder = board.elementOrder.filter((id) => {
+    if (seen.has(id) || !board.elements[id]) return false;
+    seen.add(id);
+    return true;
+  });
+  for (const id of Object.keys(board.elements).sort()) {
+    if (!seen.has(id)) elementOrder.push(id);
+  }
+  return sameOrder(board.elementOrder, elementOrder) ? board : { ...board, elementOrder };
+}
+
 export function createBoardOperation(before: Board, after: Board): BoardOperation | null {
+  before = normalizeElementOrder(before);
+  after = normalizeElementOrder(after);
   const undoElements: Record<string, CanvasElement | null> = {};
   const redoElements: Record<string, CanvasElement | null> = {};
   const ids = new Set([...Object.keys(before.elements), ...Object.keys(after.elements)]);
@@ -39,7 +54,7 @@ export function applyBoardOperation(board: Board, operation: BoardOperation, dir
     if (element) elements[id] = { ...element };
     else delete elements[id];
   }
-  return { ...board, elements, ...(patch.elementOrder ? { elementOrder: [...patch.elementOrder] } : {}) };
+  return normalizeElementOrder({ ...board, elements, ...(patch.elementOrder ? { elementOrder: [...patch.elementOrder] } : {}) });
 }
 
 function sameElement(left: CanvasElement | undefined, right: CanvasElement | undefined) {

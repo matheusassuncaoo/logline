@@ -1,0 +1,19 @@
+.overlay { position: fixed; inset: 0; z-index: 20; background: rgb(17 24 20 / 45%); backdrop-filter: blur(3px); }
+.content { position: fixed; z-index: 21; top: 50%; left: 50%; width: min(440px, calc(100vw - 32px)); transform: translate(-50%, -50%); border: 1px solid var(--border-strong); border-radius: 14px; background: var(--surface-raised); color: var(--text-primary); box-shadow: 0 24px 70px rgb(14 25 19 / 25%); }
+.header { display: flex; justify-content: space-between; gap: 20px; padding: 22px 22px 18px; border-bottom: 1px solid var(--border-subtle); }
+.header h1 { margin: 0; font-size: 1.05rem; letter-spacing: -0.03em; }
+.header p { margin: 5px 0 0; color: var(--text-secondary); font-size: 0.8rem; line-height: 1.4; }
+.close { display: grid; width: 30px; height: 30px; place-items: center; border: 0; border-radius: 7px; background: transparent; color: var(--text-secondary); cursor: pointer; }
+.close:hover { background: var(--surface-canvas); color: var(--text-primary); }
+.section { padding: 21px 22px 24px; }
+.sectionHeading { display: flex; gap: 8px; align-items: center; }
+.sectionHeading h2 { margin: 0; font-size: 0.88rem; }
+.section > p { margin: 7px 0 14px; color: var(--text-secondary); font-size: 0.8rem; }
+.options { display: grid; gap: 7px; }
+.option, .optionActive { display: flex; width: 100%; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border-subtle); border-radius: 9px; background: var(--surface-canvas); color: var(--text-secondary); text-align: left; cursor: pointer; }
+.option:hover { border-color: var(--border-strong); }
+.optionActive { border-color: var(--accent-primary); background: var(--accent-soft); color: var(--accent-primary); }
+.option span { display: grid; gap: 3px; }
+.option strong { color: var(--text-primary); font-size: 0.82rem; }
+.option small { font-size: 0.72rem; }
+.check { margin-left: auto; }

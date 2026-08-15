@@ -6,7 +6,7 @@
 
 ## Project Status
 
-LogLine is in `0.1.0`. It is an active MVP, not a complete production-grade whiteboard editor.
+LogLine `1.0.0` is the first stable local release. It remains focused on a practical offline-first whiteboard workflow.
 
 The current product has a functional local workflow: create workspaces, create and open boards, edit them in an SVG canvas, and save data locally. The project remains early-stage, so persisted formats and interactions may evolve before a stable release.
 

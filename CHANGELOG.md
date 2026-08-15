@@ -13,6 +13,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Improve accessibility, expand test coverage, packaging, and release automation.
 - Continue refining the canvas MVP.
 
+## [1.0.0] - 2026-08-14
+
+### Added
+
+- Stable local-first desktop release with Windows MSI and NSIS installers.
+- Theme preferences stored locally with system, light, and dark modes.
+- Canvas ordering controls, draft interactions, accessible toolbar semantics, and large-board rendering improvements.
+- Validation and normalization for imported, recovered, and persisted board element order.
+- Frontend tests for export and board operations, plus Rust persistence coverage for recovery and asset flows.
+
+### Changed
+
+- Hardened asset validation, workspace import limits, content security policy, and local application logging.
+
 ## [0.1.0] - 2026
 
 ### Added

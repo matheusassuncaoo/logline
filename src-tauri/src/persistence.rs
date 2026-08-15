@@ -1,5 +1,6 @@
 use crate::domain::{
-    AssetData, Board, BoardSummary, WorkspaceIndex, WorkspaceSummary, BOARD_SCHEMA_VERSION,
+    AppPreferences, AssetData, Board, BoardSummary, WorkspaceIndex, WorkspaceSummary,
+    BOARD_SCHEMA_VERSION,
 };
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use sha2::{Digest, Sha256};
@@ -40,6 +41,25 @@ impl Persistence {
                 Ok(workspace)
             })
             .collect()
+    }
+
+    pub fn get_preferences(&self) -> Result<AppPreferences, String> {
+        let path = self.preferences_path()?;
+        if !path.exists() {
+            return Ok(AppPreferences::default());
+        }
+        let file = fs::File::open(path)
+            .map_err(|error| format!("Não foi possível abrir as configurações: {error}"))?;
+        let preferences: AppPreferences = serde_json::from_reader(file)
+            .map_err(|error| format!("As configurações locais são inválidas: {error}"))?;
+        validate_theme(&preferences.theme)?;
+        Ok(preferences)
+    }
+
+    pub fn save_preferences(&self, preferences: AppPreferences) -> Result<AppPreferences, String> {
+        validate_theme(&preferences.theme)?;
+        write_json_atomically(&self.preferences_path()?, &preferences)?;
+        Ok(preferences)
     }
 
     pub fn create_workspace(&self, name: String) -> Result<WorkspaceSummary, String> {
@@ -179,7 +199,10 @@ impl Persistence {
         if board.workspace_id != workspace_id || board.id != board_id {
             return Err("O board não pertence ao workspace informado.".to_owned());
         }
-        if migrate_board(&mut board)? {
+        let migrated = migrate_board(&mut board)?;
+        let normalized = normalize_element_order(&mut board);
+        validate_board(&board)?;
+        if migrated || normalized {
             self.write_board(&board)?;
         }
         Ok(board)
@@ -187,6 +210,7 @@ impl Persistence {
 
     pub fn save_board(&self, mut board: Board) -> Result<Board, String> {
         let existing = self.open_board(&board.workspace_id, &board.id)?;
+        normalize_element_order(&mut board);
         validate_board(&board)?;
         board.created_at = existing.created_at;
         board.updated_at = now();
@@ -371,6 +395,7 @@ impl Persistence {
                 }
                 board.workspace_id = workspace.id.clone();
                 migrate_board(&mut board)?;
+                normalize_element_order(&mut board);
                 validate_board(&board)?;
                 self.write_board(&board)?;
             } else {
@@ -471,6 +496,14 @@ impl Persistence {
         self.root.join(workspace_id)
     }
 
+    fn preferences_path(&self) -> Result<PathBuf, String> {
+        Ok(self
+            .root
+            .parent()
+            .ok_or_else(|| "Diretório de configurações inválido.".to_owned())?
+            .join("preferences.json"))
+    }
+
     fn journal_path(&self, workspace_id: &str, board_id: &str) -> Result<PathBuf, String> {
         valid_id(workspace_id)?;
         valid_id(board_id)?;
@@ -536,6 +569,7 @@ impl Persistence {
                 let mut board: Board = serde_json::from_reader(file)
                     .map_err(|error| format!("O journal de um board está corrompido: {error}"))?;
                 migrate_board(&mut board)?;
+                normalize_element_order(&mut board);
                 if board.workspace_id != workspace_id || board.id != board_id {
                     return Err("O journal não corresponde ao board informado.".to_owned());
                 }
@@ -597,6 +631,27 @@ fn validate_board(board: &Board) -> Result<(), String> {
     Ok(())
 }
 
+fn normalize_element_order(board: &mut Board) -> bool {
+    let mut seen = std::collections::HashSet::new();
+    let mut element_order = Vec::with_capacity(board.elements.len());
+    for id in &board.element_order {
+        if board.elements.contains_key(id) && seen.insert(id.clone()) {
+            element_order.push(id.clone());
+        }
+    }
+    for id in board.elements.keys() {
+        if seen.insert(id.clone()) {
+            element_order.push(id.clone());
+        }
+    }
+    if element_order == board.element_order {
+        false
+    } else {
+        board.element_order = element_order;
+        true
+    }
+}
+
 fn validate_workspace_index(index: &WorkspaceIndex) -> Result<(), String> {
     if index.schema_version != crate::domain::WORKSPACE_SCHEMA_VERSION {
         return Err("A versão do índice de workspaces não é suportada.".to_owned());
@@ -625,6 +680,14 @@ pub fn validate_name(name: &str) -> Result<(), String> {
         return Err("O nome deve ter entre 1 e 120 caracteres.".to_owned());
     }
     Ok(())
+}
+
+fn validate_theme(theme: &str) -> Result<(), String> {
+    if matches!(theme, "system" | "light" | "dark") {
+        Ok(())
+    } else {
+        Err("O tema informado não é suportado.".to_owned())
+    }
 }
 
 fn valid_id(id: &str) -> Result<(), String> {
@@ -714,6 +777,7 @@ fn now() -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::{CanvasElement, CanvasElementKind};
 
     fn test_persistence() -> (Persistence, PathBuf) {
         let root = std::env::temp_dir().join(format!("logline-persistence-{}", nanoid::nanoid!()));
@@ -889,6 +953,48 @@ mod tests {
             .journal_path(&workspace.id, &recovered.id)
             .unwrap()
             .exists());
+        fs::remove_dir_all(root).expect("remove test directory");
+    }
+
+    #[test]
+    fn normalizes_legacy_element_order_when_opening_a_board() {
+        let (persistence, root) = test_persistence();
+        let workspace = persistence
+            .create_workspace("Workspace".to_owned())
+            .unwrap();
+        let mut board = persistence
+            .create_board(&workspace.id, "Board".to_owned())
+            .unwrap();
+        for id in ["b", "a"] {
+            board.elements.insert(
+                id.to_owned(),
+                CanvasElement {
+                    id: id.to_owned(),
+                    kind: CanvasElementKind::Shape,
+                    x: 0.0,
+                    y: 0.0,
+                    width: 100.0,
+                    height: 80.0,
+                    rotation: 0.0,
+                    content: String::new(),
+                    color: "#dff2e9".to_owned(),
+                    group_id: None,
+                },
+            );
+        }
+        board.element_order = vec!["b".to_owned(), "removed".to_owned(), "b".to_owned()];
+        persistence.write_board(&board).unwrap();
+
+        let normalized = persistence.open_board(&workspace.id, &board.id).unwrap();
+
+        assert_eq!(normalized.element_order, vec!["b", "a"]);
+        assert_eq!(
+            persistence
+                .open_board(&workspace.id, &board.id)
+                .unwrap()
+                .element_order,
+            vec!["b", "a"]
+        );
         fs::remove_dir_all(root).expect("remove test directory");
     }
 }

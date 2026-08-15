@@ -36,6 +36,7 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
   const [tool, setTool] = useState<Tool>("select");
   const [showGrid, setShowGrid] = useState(true);
   const [marquee, setMarquee] = useState<{ start: Point; end: Point } | null>(null);
+  const [draftElement, setDraftElement] = useState<CanvasElement | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const interaction = useRef<Interaction | null>(null);
   const latestInteractionBoard = useRef<Board | null>(null);
@@ -44,6 +45,7 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
   const clipboard = useRef<CanvasElement[]>([]);
   const textEditBefore = useRef<Record<string, Board>>({});
   const textEditAfter = useRef<Record<string, Board>>({});
+  const draftElementRef = useRef<CanvasElement | null>(null);
   boardRef.current = board;
 
   useEffect(() => {
@@ -229,20 +231,18 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
     if (tool === "connector" && event.button === 0) {
       const before = boardRef.current;
       const element: CanvasElement = { id: nanoid(), kind: "connector", x: start.x, y: start.y, width: 1, height: 1, rotation: 0, content: "", color: "#52645b" };
-      const next = { ...before, elements: { ...before.elements, [element.id]: element }, elementOrder: [...before.elementOrder, element.id] };
-      onChange(next);
       interaction.current = { kind: "connector", pointerId: event.pointerId, start, before, element, changed: false };
-      latestInteractionBoard.current = next;
+      draftElementRef.current = element;
+      setDraftElement(element);
       event.currentTarget.setPointerCapture(event.pointerId);
       return;
     }
     if (tool === "draw" && event.button === 0) {
       const before = boardRef.current;
       const element: CanvasElement = { id: nanoid(), kind: "freehand", x: start.x, y: start.y, width: 0, height: 0, rotation: 0, content: JSON.stringify([start]), color: "#315f50" };
-      const next = { ...before, elements: { ...before.elements, [element.id]: element }, elementOrder: [...before.elementOrder, element.id] };
-      onChange(next);
       interaction.current = { kind: "draw", pointerId: event.pointerId, before, element, points: [start], changed: false };
-      latestInteractionBoard.current = next;
+      draftElementRef.current = element;
+      setDraftElement(element);
       event.currentTarget.setPointerCapture(event.pointerId);
       return;
     }
@@ -329,17 +329,17 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
     }
     if (active.kind === "connector") {
       active.changed = true;
-      const next = { ...active.before, elements: { ...active.before.elements, [active.element.id]: { ...active.element, width: current.x - active.start.x, height: current.y - active.start.y } } };
-      latestInteractionBoard.current = next;
-      onChange(next);
+      const element = { ...active.element, width: current.x - active.start.x, height: current.y - active.start.y };
+      draftElementRef.current = element;
+      setDraftElement(element);
     }
     if (active.kind === "draw") {
       const points = [...active.points, current];
       active.points = points;
       active.changed = true;
-      const next = { ...active.before, elements: { ...active.before.elements, [active.element.id]: { ...active.element, content: JSON.stringify(points) } } };
-      latestInteractionBoard.current = next;
-      onChange(next);
+      const element = { ...active.element, content: JSON.stringify(points) };
+      draftElementRef.current = element;
+      setDraftElement(element);
     }
   }
 
@@ -350,9 +350,27 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
     event.currentTarget.releasePointerCapture(event.pointerId);
     if (active.kind === "marquee") { setMarquee(null); return; }
     if (active.kind === "pan") return;
-    if (active.changed || active.kind === "connector" || active.kind === "draw") onCommit(active.before, latestInteractionBoard.current ?? boardRef.current);
+    if (active.kind === "connector" || active.kind === "draw") {
+      const element = draftElementRef.current ?? active.element;
+      onCommit(active.before, { ...active.before, elements: { ...active.before.elements, [element.id]: element }, elementOrder: [...active.before.elementOrder, element.id] });
+      draftElementRef.current = null;
+      setDraftElement(null);
+    } else if (active.changed) onCommit(active.before, latestInteractionBoard.current ?? boardRef.current);
     latestInteractionBoard.current = null;
     if (active.kind === "connector" || active.kind === "draw") { setSelectedIds([active.element.id]); setTool("select"); }
+  }
+
+  function cancelInteraction(event: PointerEvent<SVGSVGElement>) {
+    const active = interaction.current;
+    if (!active || active.pointerId !== event.pointerId) return;
+    interaction.current = null;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    if (active.kind === "marquee") setMarquee(null);
+    if (active.kind === "connector" || active.kind === "draw") {
+      draftElementRef.current = null;
+      setDraftElement(null);
+    } else if ("before" in active) onChange(active.before);
+    latestInteractionBoard.current = null;
   }
 
   function handleWheel(event: WheelEvent<SVGSVGElement>) {
@@ -368,7 +386,7 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
   const visibleElementIds = visibleElements(board, viewport, svgRef.current?.getBoundingClientRect(), selectedIds);
   return (
     <section className={styles.canvasShell}>
-      <div className={styles.toolbar}>
+      <div className={styles.toolbar} role="toolbar" aria-label="Ferramentas do canvas">
         <ToolButton active={tool === "select"} label="Selecionar (V)" onClick={() => setTool("select")}><MousePointer2 size={17} /></ToolButton>
         <ToolButton label="Sticky note (N)" onClick={() => addElement("sticky-note")}><StickyNote size={17} /></ToolButton>
         <ToolButton label="Texto (T)" onClick={() => addElement("text")}><Type size={17} /></ToolButton>
@@ -389,19 +407,21 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
         <ToolButton label="Desagrupar" disabled={!selectedIds.some((id) => board.elements[id]?.groupId)} onClick={ungroupSelected}>U</ToolButton>
         <ToolButton label="Excluir" disabled={!selectedIds.length} onClick={deleteSelected}><Trash2 size={17} /></ToolButton>
       </div>
-      <svg ref={svgRef} className={styles.canvas} tabIndex={0} role="application" aria-label="Canvas do board. Use as ferramentas e atalhos de teclado para editar." onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={finishInteraction} onPointerCancel={finishInteraction} onWheel={handleWheel}>
+      <svg ref={svgRef} className={styles.canvas} tabIndex={0} role="application" aria-label="Canvas do board. Use as ferramentas e atalhos de teclado para editar." onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={finishInteraction} onPointerCancel={cancelInteraction} onWheel={handleWheel}>
         <defs>
-          <pattern id="dot-grid" width="24" height="24" patternUnits="userSpaceOnUse" patternTransform={`translate(${viewport.x} ${viewport.y}) scale(${viewport.zoom})`}><circle cx="1" cy="1" r="1" fill="#d8ddd7" /></pattern>
+          <pattern id="dot-grid" width="24" height="24" patternUnits="userSpaceOnUse" patternTransform={`translate(${viewport.x} ${viewport.y}) scale(${viewport.zoom})`}><circle cx="1" cy="1" r="1" fill="var(--canvas-grid-dot)" /></pattern>
           <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 Z" fill="#52645b" /></marker>
         </defs>
         {showGrid && <rect width="100%" height="100%" fill="url(#dot-grid)" />}
         <g transform={`translate(${viewport.x} ${viewport.y}) scale(${viewport.zoom})`}>
           {visibleElementIds.map((id) => <CanvasElementView key={id} element={board.elements[id]} selected={selectedIds.includes(id)} onPointerDown={handleElementPointerDown} onTextChange={updateElement} onTextFocus={beginTextEdit} onTextBlur={completeTextEdit} assets={assets} />)}
+          {draftElement && <CanvasElementView element={draftElement} selected onPointerDown={() => undefined} onTextChange={() => undefined} onTextFocus={() => undefined} onTextBlur={() => undefined} assets={assets} />}
           {single && single.kind !== "connector" && single.kind !== "freehand" && <SelectionHandles element={single} onResize={startResize} onRotate={startRotate} />}
           {marquee && <rect className={styles.marquee} x={Math.min(marquee.start.x, marquee.end.x)} y={Math.min(marquee.start.y, marquee.end.y)} width={Math.abs(marquee.end.x - marquee.start.x)} height={Math.abs(marquee.end.y - marquee.start.y)} />}
         </g>
       </svg>
       <div className={styles.zoom}>{Math.round(viewport.zoom * 100)}%</div>
+      {selectedIds.length > 0 && <div className={styles.selectionInfo}>{selectedIds.length === 1 ? "1 elemento selecionado" : `${selectedIds.length} elementos selecionados`}</div>}
     </section>
   );
 }

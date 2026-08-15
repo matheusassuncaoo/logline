@@ -1,9 +1,9 @@
-.canvasShell { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: #f9faf7; }
+.canvasShell { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: var(--canvas-background); }
 .canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
 .canvas:active { cursor: grabbing; }
-.toolbar { position: absolute; z-index: 2; top: 18px; left: 18px; display: flex; align-items: center; gap: 5px; padding: 5px; border: 1px solid var(--border-subtle); border-radius: 10px; background: color-mix(in srgb, var(--surface-raised) 94%, transparent); box-shadow: 0 8px 25px rgb(31 41 35 / 9%); }
-.toolbar span { height: 24px; width: 1px; margin: 0 2px; background: var(--border-subtle); }
-.toolbar button { display: inline-flex; min-height: 30px; align-items: center; gap: 6px; padding: 0 9px; border: 0; border-radius: 6px; background: transparent; color: var(--text-secondary); font-size: 0.78rem; cursor: pointer; }
+.toolbar { position: absolute; z-index: 2; top: 18px; left: 18px; display: grid; grid-template-columns: repeat(2, 34px); gap: 4px; max-height: calc(100% - 36px); padding: 5px; overflow-y: auto; border: 1px solid var(--border-subtle); border-radius: 11px; background: color-mix(in srgb, var(--surface-raised) 94%, transparent); box-shadow: 0 10px 30px rgb(31 41 35 / 13%); }
+.toolbar span { grid-column: 1 / -1; height: 1px; width: auto; margin: 3px 2px; background: var(--border-subtle); }
+.toolbar button { display: grid; width: 34px; height: 34px; place-items: center; padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--text-secondary); font-size: 0.72rem; cursor: pointer; }
 .toolbar button:hover, .toolbar .toolActive { background: var(--accent-soft); color: var(--accent-primary); }
 .toolbar button:disabled { cursor: default; opacity: 0.35; }
 .selection { fill: none; stroke: var(--accent-primary); stroke-width: 2; vector-effect: non-scaling-stroke; }
@@ -23,4 +23,6 @@
 .resizeHandle { fill: var(--surface-raised); stroke: var(--accent-primary); stroke-width: 2; cursor: nwse-resize; }
 .rotationLine { stroke: var(--accent-primary); stroke-width: 1.5; }
 .rotationHandle { fill: var(--accent-primary); stroke: var(--surface-raised); stroke-width: 2; cursor: grab; }
-.zoom { position: absolute; right: 18px; bottom: 18px; padding: 7px 9px; border: 1px solid var(--border-subtle); border-radius: 7px; background: var(--surface-raised); color: var(--text-secondary); font: 650 0.72rem var(--font-mono); }
+.zoom, .selectionInfo { position: absolute; bottom: 18px; padding: 7px 9px; border: 1px solid var(--border-subtle); border-radius: 7px; background: color-mix(in srgb, var(--surface-raised) 94%, transparent); color: var(--text-secondary); font: 650 0.72rem var(--font-mono); }
+.zoom { right: 18px; }
+.selectionInfo { right: 74px; color: var(--accent-primary); }

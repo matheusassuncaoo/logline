@@ -11,8 +11,27 @@
   --accent-contrast: #ffffff;
   --accent-positive: #42a277;
   --danger: #b42318;
+  --canvas-background: #f9faf7;
+  --canvas-grid-dot: #d8ddd7;
   --radius-sm: 8px;
   --radius-md: 13px;
   --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+:root[data-theme="dark"] {
+  --surface-canvas: #17201c;
+  --surface-raised: #202b26;
+  --text-primary: #edf3ee;
+  --text-secondary: #afbbb4;
+  --text-tertiary: #78877e;
+  --border-subtle: #34433b;
+  --border-strong: #536259;
+  --accent-primary: #58c796;
+  --accent-soft: #193c2e;
+  --accent-contrast: #10261b;
+  --accent-positive: #65d5a4;
+  --danger: #ff9187;
+  --canvas-background: #19231e;
+  --canvas-grid-dot: #3b4a42;
 }

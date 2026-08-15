@@ -32,6 +32,10 @@ export type AssetData = {
   dataUrl: string;
 };
 
+export type AppPreferences = {
+  theme: "system" | "light" | "dark";
+};
+
 export type Board = {
   id: string;
   workspaceId: string;

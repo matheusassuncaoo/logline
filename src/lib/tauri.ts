@@ -1,9 +1,11 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { AssetData, Board, BoardSummary, WorkspaceSummary } from "./types";
+import type { AppPreferences, AssetData, Board, BoardSummary, WorkspaceSummary } from "./types";
 
 export const workspaceApi = {
   list: () => invoke<WorkspaceSummary[]>("list_workspaces"),
   create: (name: string) => invoke<WorkspaceSummary>("create_workspace", { name }),
+  getPreferences: () => invoke<AppPreferences>("get_preferences"),
+  savePreferences: (preferences: AppPreferences) => invoke<AppPreferences>("save_preferences", { preferences }),
   createBoard: (workspaceId: string, name: string) =>
     invoke<Board>("create_board", { workspaceId, name }),
   renameBoard: (workspaceId: string, boardId: string, name: string) =>

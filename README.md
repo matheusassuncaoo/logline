@@ -7,7 +7,7 @@
 [English](README.en.md) | [Português (Brasil)](README.pt-BR.md)
 
 [![Status](https://img.shields.io/badge/status-MVP-146a52?style=flat-square)](README.en.md#project-status)
-[![Version](https://img.shields.io/badge/version-0.1.0-146a52?style=flat-square)](README.en.md#project-status)
+[![Version](https://img.shields.io/badge/version-1.0.0-146a52?style=flat-square)](README.en.md#project-status)
 [![License](https://img.shields.io/badge/license-MIT-146a52?style=flat-square)](LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-v2-24c8db?style=flat-square&logo=tauri&logoColor=white)](https://tauri.app/)
 [![React](https://img.shields.io/badge/React-18-61dafb?style=flat-square&logo=react&logoColor=white)](https://react.dev/)
@@ -23,9 +23,9 @@
 
 ## Project At A Glance
 
-LogLine is in `0.1.0` and is actively evolving. It already provides a local workspace and board workflow, an SVG canvas MVP, local autosave, undo/redo, image assets, portable workspace import/export, and automated coverage for export and persistence. It is not yet a complete production-grade whiteboard editor.
+LogLine `1.0.0` is the first stable local release. It provides a local workspace and board workflow, an SVG canvas, local autosave, undo/redo, image assets, portable workspace import/export, preferences, and automated coverage for export and persistence.
 
-O LogLine está na versão `0.1.0` e em evolução ativa. Ele já oferece um fluxo local de workspaces e boards, um MVP de canvas SVG, autosave local, undo/redo, assets de imagem, importação/exportação portátil de workspaces e cobertura automatizada para exportação e persistência. Ainda não é um editor de whiteboard completo em nível de produção.
+O LogLine `1.0.0` é a primeira release local estável. Ele oferece um fluxo local de workspaces e boards, canvas SVG, autosave local, undo/redo, assets de imagem, importação/exportação portátil de workspaces, preferências e cobertura automatizada para exportação e persistência.
 
 ## Quick Start
 

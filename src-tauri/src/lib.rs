@@ -1,7 +1,7 @@
 mod domain;
 mod persistence;
 
-use domain::{AssetData, Board, BoardSummary, WorkspaceSummary};
+use domain::{AppPreferences, AssetData, Board, BoardSummary, WorkspaceSummary};
 use persistence::{validate_name, Persistence};
 use std::{fs, sync::Mutex};
 use tauri::{Manager, State};
@@ -28,6 +28,27 @@ fn create_workspace(name: String, state: State<'_, AppState>) -> Result<Workspac
         .lock()
         .map_err(|_| "O armazenamento está indisponível.".to_owned())?
         .create_workspace(name)
+}
+
+#[tauri::command]
+fn get_preferences(state: State<'_, AppState>) -> Result<AppPreferences, String> {
+    state
+        .persistence
+        .lock()
+        .map_err(|_| "O armazenamento está indisponível.".to_owned())?
+        .get_preferences()
+}
+
+#[tauri::command]
+fn save_preferences(
+    preferences: AppPreferences,
+    state: State<'_, AppState>,
+) -> Result<AppPreferences, String> {
+    state
+        .persistence
+        .lock()
+        .map_err(|_| "O armazenamento está indisponível.".to_owned())?
+        .save_preferences(preferences)
 }
 
 #[tauri::command]
@@ -193,6 +214,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             list_workspaces,
             create_workspace,
+            get_preferences,
+            save_preferences,
             create_board,
             rename_board,
             duplicate_board,
