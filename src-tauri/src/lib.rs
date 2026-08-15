@@ -46,6 +46,51 @@ fn create_board(
 }
 
 #[tauri::command]
+fn rename_board(
+    workspace_id: String,
+    board_id: String,
+    name: String,
+    state: State<'_, AppState>,
+) -> Result<Board, String> {
+    let name = name.trim().to_owned();
+    validate_name(&name)?;
+    state
+        .persistence
+        .lock()
+        .map_err(|_| "O armazenamento está indisponível.".to_owned())?
+        .rename_board(&workspace_id, &board_id, name)
+}
+
+#[tauri::command]
+fn duplicate_board(
+    workspace_id: String,
+    board_id: String,
+    name: String,
+    state: State<'_, AppState>,
+) -> Result<Board, String> {
+    let name = name.trim().to_owned();
+    validate_name(&name)?;
+    state
+        .persistence
+        .lock()
+        .map_err(|_| "O armazenamento está indisponível.".to_owned())?
+        .duplicate_board(&workspace_id, &board_id, name)
+}
+
+#[tauri::command]
+fn delete_board(
+    workspace_id: String,
+    board_id: String,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    state
+        .persistence
+        .lock()
+        .map_err(|_| "O armazenamento está indisponível.".to_owned())?
+        .delete_board(&workspace_id, &board_id)
+}
+
+#[tauri::command]
 fn list_boards(
     workspace_id: String,
     state: State<'_, AppState>,
@@ -141,6 +186,9 @@ pub fn run() {
             list_workspaces,
             create_workspace,
             create_board,
+            rename_board,
+            duplicate_board,
+            delete_board,
             list_boards,
             open_board,
             save_board,

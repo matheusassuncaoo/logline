@@ -1,5 +1,5 @@
 import { PointerEvent, WheelEvent, useEffect, useRef, useState, type ReactNode } from "react";
-import { BringToFront, Copy, Frame, GitBranch, MousePointer2, Pencil, Redo2, Square, StickyNote, Trash2, Type, Undo2 } from "lucide-react";
+import { BringToFront, Copy, Frame, GitBranch, Grid3X3, MousePointer2, Pencil, Redo2, Square, StickyNote, Trash2, Type, Undo2 } from "lucide-react";
 import { nanoid } from "nanoid";
 import type { Board, CanvasElement, CanvasElementKind } from "../../lib/types";
 import styles from "./Canvas.module.css";
@@ -34,6 +34,7 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
   const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [tool, setTool] = useState<Tool>("select");
+  const [showGrid, setShowGrid] = useState(true);
   const [marquee, setMarquee] = useState<{ start: Point; end: Point } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const interaction = useRef<Interaction | null>(null);
@@ -41,6 +42,7 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
   const boardRef = useRef(board);
   const spacePressed = useRef(false);
   const clipboard = useRef<CanvasElement[]>([]);
+  const textEditBefore = useRef<Record<string, Board>>({});
   boardRef.current = board;
 
   useEffect(() => {
@@ -114,6 +116,16 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
     if (commit) onCommit(before, next); else onChange(next);
   }
 
+  function beginTextEdit(id: string) {
+    if (!textEditBefore.current[id]) textEditBefore.current[id] = boardRef.current;
+  }
+
+  function completeTextEdit(id: string) {
+    const before = textEditBefore.current[id];
+    delete textEditBefore.current[id];
+    if (before) onCommit(before, boardRef.current);
+  }
+
   function deleteSelected() {
     const current = boardRef.current;
     if (!selectedIds.length) return;
@@ -176,9 +188,10 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
     if (tool === "connector" && event.button === 0) {
       const before = boardRef.current;
       const element: CanvasElement = { id: nanoid(), kind: "connector", x: start.x, y: start.y, width: 1, height: 1, rotation: 0, content: "", color: "#52645b" };
-      onChange({ ...before, elements: { ...before.elements, [element.id]: element }, elementOrder: [...before.elementOrder, element.id] });
+      const next = { ...before, elements: { ...before.elements, [element.id]: element }, elementOrder: [...before.elementOrder, element.id] };
+      onChange(next);
       interaction.current = { kind: "connector", pointerId: event.pointerId, start, before, element, changed: false };
-      latestInteractionBoard.current = null;
+      latestInteractionBoard.current = next;
       event.currentTarget.setPointerCapture(event.pointerId);
       return;
     }
@@ -188,7 +201,7 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
       const next = { ...before, elements: { ...before.elements, [element.id]: element }, elementOrder: [...before.elementOrder, element.id] };
       onChange(next);
       interaction.current = { kind: "draw", pointerId: event.pointerId, before, element, points: [start], changed: false };
-      latestInteractionBoard.current = null;
+      latestInteractionBoard.current = next;
       event.currentTarget.setPointerCapture(event.pointerId);
       return;
     }
@@ -296,7 +309,7 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
     event.currentTarget.releasePointerCapture(event.pointerId);
     if (active.kind === "marquee") { setMarquee(null); return; }
     if (active.kind === "pan") return;
-    if (active.changed) onCommit(active.before, latestInteractionBoard.current ?? boardRef.current);
+    if (active.changed || active.kind === "connector" || active.kind === "draw") onCommit(active.before, latestInteractionBoard.current ?? boardRef.current);
     latestInteractionBoard.current = null;
     if (active.kind === "connector" || active.kind === "draw") { setSelectedIds([active.element.id]); setTool("select"); }
   }
@@ -321,6 +334,7 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
         <ToolButton label="Frame" onClick={() => addElement("frame")}><Frame size={17} /></ToolButton>
         <ToolButton active={tool === "connector"} label="Conector" onClick={() => setTool("connector")}><GitBranch size={17} /></ToolButton>
         <ToolButton active={tool === "draw"} label="Desenho livre" onClick={() => setTool("draw")}><Pencil size={17} /></ToolButton>
+        <ToolButton active={showGrid} label={showGrid ? "Ocultar grade" : "Mostrar grade"} onClick={() => setShowGrid((visible) => !visible)}><Grid3X3 size={17} /></ToolButton>
         <span />
         <ToolButton label="Desfazer" disabled={!canUndo} onClick={onUndo}><Undo2 size={17} /></ToolButton>
         <ToolButton label="Refazer" disabled={!canRedo} onClick={onRedo}><Redo2 size={17} /></ToolButton>
@@ -332,12 +346,12 @@ export function Canvas({ board, onChange, onCommit, onUndo, onRedo, canUndo, can
       </div>
       <svg ref={svgRef} className={styles.canvas} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={finishInteraction} onPointerCancel={finishInteraction} onWheel={handleWheel}>
         <defs>
-          <pattern id="dot-grid" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#d8ddd7" /></pattern>
+          <pattern id="dot-grid" width="24" height="24" patternUnits="userSpaceOnUse" patternTransform={`translate(${viewport.x} ${viewport.y}) scale(${viewport.zoom})`}><circle cx="1" cy="1" r="1" fill="#d8ddd7" /></pattern>
           <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 Z" fill="#52645b" /></marker>
         </defs>
-        <rect width="100%" height="100%" fill="url(#dot-grid)" />
+        {showGrid && <rect width="100%" height="100%" fill="url(#dot-grid)" />}
         <g transform={`translate(${viewport.x} ${viewport.y}) scale(${viewport.zoom})`}>
-          {board.elementOrder.map((id) => <CanvasElementView key={id} element={board.elements[id]} selected={selectedIds.includes(id)} onPointerDown={handleElementPointerDown} onTextChange={updateElement} assets={assets} />)}
+          {board.elementOrder.map((id) => <CanvasElementView key={id} element={board.elements[id]} selected={selectedIds.includes(id)} onPointerDown={handleElementPointerDown} onTextChange={updateElement} onTextFocus={beginTextEdit} onTextBlur={completeTextEdit} assets={assets} />)}
           {single && single.kind !== "connector" && single.kind !== "freehand" && <SelectionHandles element={single} onResize={startResize} onRotate={startRotate} />}
           {marquee && <rect className={styles.marquee} x={Math.min(marquee.start.x, marquee.end.x)} y={Math.min(marquee.start.y, marquee.end.y)} width={Math.abs(marquee.end.x - marquee.start.x)} height={Math.abs(marquee.end.y - marquee.start.y)} />}
         </g>
@@ -351,7 +365,7 @@ function ToolButton({ active, label, onClick, disabled, children }: { active?: b
   return <button className={active ? styles.toolActive : ""} type="button" title={label} aria-label={label} onClick={onClick} disabled={disabled}>{children}</button>;
 }
 
-function CanvasElementView({ element, selected, onPointerDown, onTextChange, assets }: { element: CanvasElement; selected: boolean; onPointerDown: (event: PointerEvent<SVGGElement>, element: CanvasElement) => void; onTextChange: (id: string, update: Partial<CanvasElement>) => void; assets: Record<string, string> }) {
+function CanvasElementView({ element, selected, onPointerDown, onTextChange, onTextFocus, onTextBlur, assets }: { element: CanvasElement; selected: boolean; onPointerDown: (event: PointerEvent<SVGGElement>, element: CanvasElement) => void; onTextChange: (id: string, update: Partial<CanvasElement>) => void; onTextFocus: (id: string) => void; onTextBlur: (id: string) => void; assets: Record<string, string> }) {
   if (!element) return null;
   if (element.kind === "connector") return <g onPointerDown={(event) => onPointerDown(event, element)}><line className={selected ? styles.connectorSelected : styles.connector} x1={element.x} y1={element.y} x2={element.x + element.width} y2={element.y + element.height} markerEnd="url(#arrow)" /></g>;
   if (element.kind === "freehand") return <g onPointerDown={(event) => onPointerDown(event, element)}><polyline className={selected ? styles.freehandSelected : styles.freehand} points={freehandPoints(element.content)} /></g>;
@@ -361,8 +375,8 @@ function CanvasElementView({ element, selected, onPointerDown, onTextChange, ass
       {element.kind === "shape" && <rect className={styles.shape} width={element.width} height={element.height} rx="10" fill={element.color} />}
       {element.kind === "frame" && <><rect className={styles.frame} width={element.width} height={element.height} rx="12" /><text className={styles.frameLabel} x="14" y="27">Frame</text></>}
       {element.kind === "image" && <image className={styles.image} href={assets[element.content]} width={element.width} height={element.height} preserveAspectRatio="xMidYMid meet" />}
-      {element.kind === "sticky-note" && <><rect className={styles.noteShadow} x="3" y="5" width={element.width} height={element.height} rx="4" /><foreignObject x="0" y="0" width={element.width} height={element.height}><textarea className={styles.note} value={element.content} aria-label="Conteúdo do sticky note" style={{ backgroundColor: element.color }} onChange={(event) => onTextChange(element.id, { content: event.target.value })} /></foreignObject></>}
-      {element.kind === "text" && <foreignObject x="0" y="0" width={element.width} height={element.height}><textarea className={styles.text} value={element.content} aria-label="Texto" onChange={(event) => onTextChange(element.id, { content: event.target.value })} /></foreignObject>}
+      {element.kind === "sticky-note" && <><rect className={styles.noteShadow} x="3" y="5" width={element.width} height={element.height} rx="4" /><foreignObject x="0" y="0" width={element.width} height={element.height}><textarea className={styles.note} value={element.content} aria-label="Conteúdo do sticky note" style={{ backgroundColor: element.color }} onFocus={() => onTextFocus(element.id)} onBlur={() => onTextBlur(element.id)} onChange={(event) => onTextChange(element.id, { content: event.target.value })} /></foreignObject></>}
+      {element.kind === "text" && <foreignObject x="0" y="0" width={element.width} height={element.height}><textarea className={styles.text} value={element.content} aria-label="Texto" onFocus={() => onTextFocus(element.id)} onBlur={() => onTextBlur(element.id)} onChange={(event) => onTextChange(element.id, { content: event.target.value })} /></foreignObject>}
     </g>
   );
 }

@@ -6,14 +6,14 @@ Obrigado pelo interesse em contribuir com o LogLine.
 
 LogLine is an early-stage offline-first desktop whiteboard MVP. Contributions should keep the project practical, local-first, and honest about what is already implemented.
 
-O LogLine e um MVP de whiteboard desktop offline-first em fase inicial. Contribuicoes devem manter o projeto pratico, local-first e honesto sobre o que ja esta implementado.
+O LogLine é um MVP de whiteboard desktop offline-first em fase inicial. Contribuições devem manter o projeto prático, local-first e honesto sobre o que já está implementado.
 
 ## Project Phases
 
 - Phase 0: Desktop/local-first foundation. Implemented.
 - Phase 1: Workspaces and boards. Implemented as MVP.
 - Phase 2: Canvas MVP. Implemented as MVP.
-- Phase 3: Assets, import/export, and recovery flows. Backend groundwork exists; user-facing UI is still planned.
+- Phase 3: Assets, import/export, and recovery flows. Local MVP implemented.
 - Phase 4: Quality, tests, accessibility, packaging, and release polish. Planned.
 
 ## Ways to Contribute
@@ -24,8 +24,8 @@ O LogLine e um MVP de whiteboard desktop offline-first em fase inicial. Contribu
 - Add tests and verification workflows.
 - Improve canvas editing behavior.
 - Improve local persistence safety.
-- Wire image assets into the frontend end-to-end.
-- Expose import/export and recovery flows through Tauri commands and UI.
+- Improve image asset behavior and board export.
+- Improve workspace import validation and feedback.
 - Improve packaging and release readiness.
 - Refactor carefully when it removes real complexity.
 
@@ -105,7 +105,7 @@ When changing persisted structures:
 - Avoid data loss during migrations.
 - Document any breaking local data change clearly.
 
-Backend persistence includes helpers for assets and portable workspace import/export. Treat these as groundwork until the corresponding Tauri commands and frontend flows exist.
+Local image assets, workspace import, and export are implemented user-facing flows.
 
 ## Pull Requests
 
@@ -154,4 +154,4 @@ Useful feature requests include:
 
 There is no dedicated automated test suite configured yet. Until one is added, use the most relevant build/check commands and describe manual verification in PRs.
 
-Ainda nao existe uma suite automatizada de testes configurada. Ate que ela exista, use os comandos de build/check mais relevantes e descreva a verificacao manual nos PRs.
+Ainda não existe uma suíte automatizada de testes configurada. Até que ela exista, use os comandos de build/check mais relevantes e descreva a verificação manual nos PRs.

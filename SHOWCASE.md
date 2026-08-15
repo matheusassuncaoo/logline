@@ -2,7 +2,7 @@
 
 LogLine is an offline-first desktop whiteboard for people who want to organize ideas, flows, maps, and decisions without depending on a network connection.
 
-LogLine e um whiteboard desktop offline-first para pessoas que querem organizar ideias, fluxos, mapas e decisoes sem depender de conexao com a rede.
+LogLine é um whiteboard desktop offline-first para pessoas que querem organizar ideias, fluxos, mapas e decisões sem depender de conexão com a rede.
 
 ## What LogLine Is For
 
@@ -26,31 +26,31 @@ The current MVP already includes the first usable editing loop:
 - Use undo/redo during an active board session.
 - Save board changes locally with autosave.
 
-O MVP atual ja inclui o primeiro ciclo utilizavel de edicao:
+O MVP atual já inclui o primeiro ciclo utilizável de edição:
 
 - Criar workspaces locais.
 - Criar, listar e abrir boards dentro de um workspace.
 - Editar boards em um canvas SVG.
 - Adicionar sticky notes, texto, formas, frames, conectores e desenho livre.
 - Selecionar, mover, redimensionar, rotacionar, duplicar, excluir, agrupar e reordenar elementos.
-- Usar undo/redo durante uma sessao de board ativa.
-- Salvar alteracoes localmente com autosave.
+- Usar undo/redo durante uma sessão de board ativa.
+- Salvar alterações localmente com autosave.
 
 ## Product Phases
 
 - Phase 0: Desktop/local-first foundation. Tauri shell, Rust persistence, workspace schema, board schema, and atomic writes.
 - Phase 1: Workspaces and boards. Workspace landing screen, workspace view, board creation, board listing, and board opening.
 - Phase 2: Canvas MVP. SVG canvas, editing tools, element operations, undo/redo, and local autosave.
-- Phase 3: Assets, import/export, and recovery. Backend groundwork exists; user-facing flows are still planned.
+- Phase 3: Assets, import/export, and recovery. Local MVP implemented.
 - Phase 4: Quality and release readiness. Tests, accessibility, responsive polish, packaging, signed builds, and release automation.
 
 ## Fases Do Produto
 
-- Fase 0: Fundacao desktop/local-first. Shell Tauri, persistencia Rust, schema de workspace, schema de board e escrita atomica.
-- Fase 1: Workspaces e boards. Tela inicial de workspaces, tela de workspace, criacao de boards, listagem de boards e abertura de boards.
-- Fase 2: Canvas MVP. Canvas SVG, ferramentas de edicao, operacoes em elementos, undo/redo e autosave local.
-- Fase 3: Assets, importacao/exportacao e recuperacao. A base backend existe; os fluxos visuais para usuario ainda estao planejados.
-- Fase 4: Qualidade e preparo para release. Testes, acessibilidade, refinamento responsivo, empacotamento, builds assinados e automacao de releases.
+- Fase 0: Fundação desktop/local-first. Shell Tauri, persistência Rust, schema de workspace, schema de board e escrita atômica.
+- Fase 1: Workspaces e boards. Tela inicial de workspaces, tela de workspace, criação de boards, listagem de boards e abertura de boards.
+- Fase 2: Canvas MVP. Canvas SVG, ferramentas de edição, operações em elementos, undo/redo e autosave local.
+- Fase 3: Assets, importação/exportação e recuperação. MVP local implementado.
+- Fase 4: Qualidade e preparo para release. Testes, acessibilidade, refinamento responsivo, empacotamento, builds assinados e automação de releases.
 
 ## Product Principles
 
@@ -76,10 +76,8 @@ When screenshots are added, prefer:
 
 These are product directions, not promises of completed features.
 
-Estas sao direcoes de produto, nao promessas de funcionalidades prontas.
+Estas são direções de produto, não promessas de funcionalidades prontas.
 
-- Image asset UI.
-- Workspace import/export UI for portable `.logline` files.
 - Visible recovery and backup flows.
 - Search inside boards.
 - More precise connector behavior.
@@ -93,10 +91,10 @@ Estas sao direcoes de produto, nao promessas de funcionalidades prontas.
 
 LogLine demonstrates a pragmatic desktop application architecture with React and Tauri, using Rust for local persistence and TypeScript for the user interface. The current codebase now includes a functional SVG canvas MVP instead of only a persistence foundation.
 
-O LogLine demonstra uma arquitetura desktop pragmatica com React e Tauri, usando Rust para persistencia local e TypeScript para a interface. O codigo atual ja inclui um MVP funcional de canvas SVG, nao apenas uma base de persistencia.
+O LogLine demonstra uma arquitetura desktop pragmática com React e Tauri, usando Rust para persistência local e TypeScript para a interface. O código atual já inclui um MVP funcional de canvas SVG, não apenas uma base de persistência.
 
 ## Short Description
 
 EN: LogLine is an offline-first desktop whiteboard MVP for organizing local workspaces, boards, flows, maps, and decisions.
 
-PT: LogLine e um MVP de whiteboard desktop offline-first para organizar workspaces, boards, fluxos, mapas e decisoes localmente.
+PT: LogLine é um MVP de whiteboard desktop offline-first para organizar workspaces, boards, fluxos, mapas e decisões localmente.

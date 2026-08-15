@@ -2,7 +2,7 @@
 
 Guidance for Claude Code and similar coding assistants working in this repository.
 
-Orientacoes para Claude Code e assistentes semelhantes trabalhando neste repositorio.
+Orientações para Claude Code e assistentes semelhantes trabalhando neste repositório.
 
 ## Summary
 
@@ -21,13 +21,12 @@ Current implementation:
 - Zustand workspace store.
 - Rust commands exposed through Tauri.
 - Local JSON persistence for workspaces and boards.
-- Rust persistence groundwork for journals, assets, and portable workspace import/export.
+- Rust persistence for journals, assets, and portable workspace import/export.
+- User-facing workspace import.
 
 Not fully implemented yet:
 
 - Production-grade board editor polish.
-- Image asset UI wired end-to-end.
-- User-facing import/export UI.
 - Visible backup/recovery flows.
 - Automated tests.
 - Accessibility pass.
@@ -38,7 +37,7 @@ Not fully implemented yet:
 - Phase 0: Desktop/local-first foundation. Implemented.
 - Phase 1: Workspaces and boards. Implemented as MVP.
 - Phase 2: Canvas MVP. Implemented as MVP.
-- Phase 3: Assets, import/export, and recovery flows. Backend groundwork exists; UI is still planned.
+- Phase 3: Assets, import/export, and recovery flows. Local MVP implemented.
 - Phase 4: Quality, tests, accessibility, packaging, and release polish. Planned.
 
 ## Commands
@@ -64,7 +63,7 @@ npm run tauri build
 - `src/stores/workspaceStore.ts`: workspace state management.
 - `src-tauri/src/domain.rs`: Rust domain types.
 - `src-tauri/src/lib.rs`: Tauri commands.
-- `src-tauri/src/persistence.rs`: local storage, journal recovery, assets, and import/export groundwork.
+- `src-tauri/src/persistence.rs`: local storage, journal recovery, assets, and portable workspace import/export.
 - `src-tauri/tauri.conf.json`: Tauri app config.
 
 ## Coding Guidance
@@ -76,7 +75,7 @@ npm run tauri build
 - Prefer CSS Modules for app-specific styling.
 - Keep shared frontend types synchronized with Rust serialization names.
 - Be careful with persisted schemas and `schemaVersion` fields.
-- Do not treat backend-only helpers as shipped user features until UI and commands are wired.
+- Keep imported workspace files validated by the Rust persistence layer.
 
 ## Canvas Guidance
 

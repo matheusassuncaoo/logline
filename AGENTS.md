@@ -12,14 +12,14 @@ LogLine is an early-stage offline-first desktop whiteboard built with Tauri, Rus
 
 The current product includes a functional canvas MVP, but it is not a complete production-grade whiteboard editor yet. The implemented foundation includes the desktop shell, workspace creation/listing, board creation/listing/opening, SVG canvas editing, local autosave, and local JSON persistence for workspaces and boards.
 
-O LogLine ja inclui um MVP funcional de canvas, mas ainda nao e um editor de whiteboard completo em nivel de producao. A base implementada inclui shell desktop, criacao/listagem de workspaces, criacao/listagem/abertura de boards, edicao em canvas SVG, autosave local e persistencia local em JSON.
+O LogLine já inclui um MVP funcional de canvas, mas ainda não é um editor de whiteboard completo em nível de produção. A base implementada inclui shell desktop, criação/listagem de workspaces, criação/listagem/abertura de boards, edição em canvas SVG, autosave local e persistência local em JSON.
 
 ## Project Phases
 
 - Phase 0: Desktop/local-first foundation. Implemented.
 - Phase 1: Workspaces and boards. Implemented as MVP.
 - Phase 2: Canvas MVP. Implemented as MVP.
-- Phase 3: Assets, export, and recovery flows. Local image and export MVP implemented; import UI is still planned.
+- Phase 3: Assets, import/export, and recovery flows. Local MVP implemented.
 - Phase 4: Quality, tests, accessibility, packaging, and release polish. Planned.
 
 ## Working Rules
@@ -64,7 +64,7 @@ O LogLine ja inclui um MVP funcional de canvas, mas ainda nao e um editor de whi
 - Journal recovery exists in the persistence layer and should not be removed casually.
 - Validate IDs and names before writing data.
 - Respect schema version fields when changing persisted structures.
-- Image assets and export commands are exposed through the frontend; workspace import remains backend-only.
+- Image assets, workspace import, and export commands are exposed through the frontend.
 
 ## Commands
 

@@ -2,11 +2,11 @@
 
 LogLine is the official name of this project.
 
-LogLine e o nome oficial deste projeto.
+LogLine é o nome oficial deste projeto.
 
 This policy explains how the LogLine name may be used by contributors, forks, community members, and distributors.
 
-Esta politica explica como o nome LogLine pode ser usado por contribuidores, forks, membros da comunidade e distribuidores.
+Esta política explica como o nome LogLine pode ser usado por contribuidores, forks, membros da comunidade e distribuidores.
 
 ## Plain Language Summary
 
@@ -47,7 +47,7 @@ You may not use the LogLine name to:
 
 Forks are welcome, but modified builds should make their status clear.
 
-Forks sao bem-vindos, mas builds modificados devem deixar seu status claro.
+Forks são bem-vindos, mas builds modificados devem deixar seu status claro.
 
 Use names such as:
 
@@ -71,16 +71,16 @@ unless you have explicit written permission from the project owner.
 
 If LogLine has official logos, icons, screenshots, or brand assets, do not use them for modified builds in a way that suggests the build is official.
 
-Se o LogLine tiver logos, icones, screenshots ou assets oficiais, nao use esses materiais em builds modificados de forma que parecam oficiais.
+Se o LogLine tiver logos, ícones, screenshots ou assets oficiais, não use esses materiais em builds modificados de forma que pareçam oficiais.
 
 ## Reporting Misuse
 
 If you find confusing or abusive use of the LogLine name, report it to the project owner or maintainer through the appropriate private channel.
 
-Se encontrar uso confuso ou abusivo do nome LogLine, reporte ao proprietario ou mantenedor do projeto pelo canal privado apropriado.
+Se encontrar uso confuso ou abusivo do nome LogLine, reporte ao proprietário ou mantenedor do projeto pelo canal privado apropriado.
 
 ## Legal Note
 
 This document is not legal advice. It is a project policy intended to protect users from confusion and protect the identity of LogLine.
 
-Este documento nao e aconselhamento juridico. E uma politica de projeto para proteger usuarios contra confusao e proteger a identidade do LogLine.
+Este documento não é aconselhamento jurídico. É uma política de projeto para proteger usuários contra confusão e proteger a identidade do LogLine.

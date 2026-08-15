@@ -43,6 +43,7 @@ impl Persistence {
     }
 
     pub fn create_workspace(&self, name: String) -> Result<WorkspaceSummary, String> {
+        validate_name(&name)?;
         let now = now();
         let workspace = WorkspaceSummary {
             id: nanoid::nanoid!(),
@@ -63,6 +64,7 @@ impl Persistence {
     }
 
     pub fn create_board(&self, workspace_id: &str, name: String) -> Result<Board, String> {
+        validate_name(&name)?;
         self.workspace(workspace_id)?;
         let now = now();
         let board = Board {
@@ -83,6 +85,57 @@ impl Persistence {
             workspace.updated_at = now;
         })?;
         Ok(board)
+    }
+
+    pub fn rename_board(
+        &self,
+        workspace_id: &str,
+        board_id: &str,
+        name: String,
+    ) -> Result<Board, String> {
+        validate_name(&name)?;
+        let mut board = self.open_board(workspace_id, board_id)?;
+        board.name = name;
+        self.save_board(board)
+    }
+
+    pub fn duplicate_board(
+        &self,
+        workspace_id: &str,
+        board_id: &str,
+        name: String,
+    ) -> Result<Board, String> {
+        validate_name(&name)?;
+        let source = self.open_board(workspace_id, board_id)?;
+        let now = now();
+        let board = Board {
+            id: nanoid::nanoid!(),
+            workspace_id: workspace_id.to_owned(),
+            name,
+            schema_version: BOARD_SCHEMA_VERSION,
+            created_at: now,
+            updated_at: now,
+            elements: source.elements,
+            element_order: source.element_order,
+        };
+        self.write_board(&board)?;
+        self.update_workspace(workspace_id, |workspace| {
+            workspace.board_count += 1;
+            workspace.updated_at = now;
+        })?;
+        Ok(board)
+    }
+
+    pub fn delete_board(&self, workspace_id: &str, board_id: &str) -> Result<(), String> {
+        self.open_board(workspace_id, board_id)?;
+        let path = self.board_path(workspace_id, board_id)?;
+        fs::remove_file(path)
+            .map_err(|error| format!("Não foi possível remover o board: {error}"))?;
+        let updated_at = now();
+        self.update_workspace(workspace_id, |workspace| {
+            workspace.board_count = workspace.board_count.saturating_sub(1);
+            workspace.updated_at = updated_at;
+        })
     }
 
     pub fn list_boards(&self, workspace_id: &str) -> Result<Vec<BoardSummary>, String> {
@@ -614,6 +667,37 @@ mod tests {
 
         assert!(persistence.save_board(board).is_err());
         assert_eq!(persistence.list_workspaces().unwrap()[0].board_count, 0);
+        fs::remove_dir_all(root).expect("remove test directory");
+    }
+
+    #[test]
+    fn renames_duplicates_and_deletes_a_board() {
+        let (persistence, root) = test_persistence();
+        let workspace = persistence
+            .create_workspace("Workspace".to_owned())
+            .unwrap();
+        let board = persistence
+            .create_board(&workspace.id, "Original".to_owned())
+            .unwrap();
+
+        let renamed = persistence
+            .rename_board(&workspace.id, &board.id, "Renamed".to_owned())
+            .unwrap();
+        let duplicate = persistence
+            .duplicate_board(&workspace.id, &renamed.id, "Copy".to_owned())
+            .unwrap();
+
+        assert_eq!(renamed.name, "Renamed");
+        assert_ne!(duplicate.id, renamed.id);
+        assert_eq!(duplicate.elements.len(), renamed.elements.len());
+        assert_eq!(duplicate.element_order, renamed.element_order);
+        assert_eq!(persistence.list_workspaces().unwrap()[0].board_count, 2);
+
+        persistence
+            .delete_board(&workspace.id, &renamed.id)
+            .unwrap();
+        assert_eq!(persistence.list_boards(&workspace.id).unwrap().len(), 1);
+        assert_eq!(persistence.list_workspaces().unwrap()[0].board_count, 1);
         fs::remove_dir_all(root).expect("remove test directory");
     }
 

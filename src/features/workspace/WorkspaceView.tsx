@@ -1,7 +1,8 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Download, FilePlus2, ImagePlus, PanelLeft, Plus } from "lucide-react";
+import { ArrowLeft, Check, Copy, Download, FilePlus2, ImagePlus, PanelLeft, Pencil, Plus, Trash2, X } from "lucide-react";
 import { nanoid } from "nanoid";
 import { Canvas } from "../canvas/Canvas";
+import { applyBoardOperation, createBoardOperation, type BoardOperation } from "../../lib/boardOperations";
 import { download, downloadPng, downloadSvg } from "../../lib/export";
 import { workspaceApi } from "../../lib/tauri";
 import type { Board, BoardSummary, CanvasElement, WorkspaceSummary } from "../../lib/types";
@@ -11,12 +12,14 @@ export function WorkspaceView({ workspace, onBack }: { workspace: WorkspaceSumma
   const [boards, setBoards] = useState<BoardSummary[]>([]);
   const [board, setBoard] = useState<Board | null>(null);
   const [name, setName] = useState("");
+  const [rename, setRename] = useState("");
+  const [isRenaming, setIsRenaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [historyVersion, setHistoryVersion] = useState(0);
   const [assets, setAssets] = useState<Record<string, string>>({});
   const saveTimer = useRef<number | null>(null);
   const imageInput = useRef<HTMLInputElement>(null);
-  const history = useRef<{ past: Board[]; future: Board[] }>({ past: [], future: [] });
+  const history = useRef<{ past: BoardOperation[]; future: BoardOperation[] }>({ past: [], future: [] });
 
   useEffect(() => {
     void workspaceApi.listBoards(workspace.id).then(setBoards).catch((reason) => setError(String(reason)));
@@ -53,13 +56,51 @@ export function WorkspaceView({ workspace, onBack }: { workspace: WorkspaceSumma
   async function openBoard(id: string) {
     try {
       setBoard(await workspaceApi.openBoard(workspace.id, id));
+      setIsRenaming(false);
+      history.current = { past: [], future: [] };
+      setHistoryVersion((version) => version + 1);
+    } catch (reason) { setError(String(reason)); }
+  }
+
+  async function renameBoard(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!board || !rename.trim()) return;
+    try {
+      const next = await workspaceApi.renameBoard(workspace.id, board.id, rename.trim());
+      setBoard(next);
+      setBoards((current) => current.map((item) => item.id === next.id ? { ...item, name: next.name, updatedAt: next.updatedAt } : item));
+      setIsRenaming(false);
+    } catch (reason) { setError(String(reason)); }
+  }
+
+  async function duplicateBoard() {
+    if (!board) return;
+    try {
+      const name = `${board.name.slice(0, 112)} (cópia)`;
+      const next = await workspaceApi.duplicateBoard(workspace.id, board.id, name);
+      setBoards((current) => [{ id: next.id, name: next.name, updatedAt: next.updatedAt }, ...current]);
+      setBoard(next);
+      history.current = { past: [], future: [] };
+      setHistoryVersion((version) => version + 1);
+    } catch (reason) { setError(String(reason)); }
+  }
+
+  async function deleteBoard() {
+    if (!board || !window.confirm(`Remover o board "${board.name}"?`)) return;
+    try {
+      await workspaceApi.deleteBoard(workspace.id, board.id);
+      setBoards((current) => current.filter((item) => item.id !== board.id));
+      setBoard(null);
+      setIsRenaming(false);
       history.current = { past: [], future: [] };
       setHistoryVersion((version) => version + 1);
     } catch (reason) { setError(String(reason)); }
   }
 
   function commitBoard(before: Board, next: Board) {
-    history.current.past.push(before);
+    const operation = createBoardOperation(before, next);
+    if (!operation) return;
+    history.current.past.push(operation);
     history.current.future = [];
     setBoard(next);
     setHistoryVersion((version) => version + 1);
@@ -67,19 +108,19 @@ export function WorkspaceView({ workspace, onBack }: { workspace: WorkspaceSumma
 
   function undo() {
     if (!board) return;
-    const previous = history.current.past.pop();
-    if (!previous) return;
-    history.current.future.push(board);
-    setBoard(previous);
+    const operation = history.current.past.pop();
+    if (!operation) return;
+    history.current.future.push(operation);
+    setBoard(applyBoardOperation(board, operation, "undo"));
     setHistoryVersion((version) => version + 1);
   }
 
   function redo() {
     if (!board) return;
-    const next = history.current.future.pop();
-    if (!next) return;
-    history.current.past.push(board);
-    setBoard(next);
+    const operation = history.current.future.pop();
+    if (!operation) return;
+    history.current.past.push(operation);
+    setBoard(applyBoardOperation(board, operation, "redo"));
     setHistoryVersion((version) => version + 1);
   }
 
@@ -116,9 +157,12 @@ export function WorkspaceView({ workspace, onBack }: { workspace: WorkspaceSumma
       </aside>
       <section className={styles.main}>
         <header className={styles.topbar}>
-          <div><p>{workspace.name}</p><h1>{board?.name ?? "Selecione ou crie um board"}</h1></div>
+          <div>
+            <p>{workspace.name}</p>
+            {isRenaming && board ? <form className={styles.renameForm} onSubmit={renameBoard}><input autoFocus aria-label="Nome do board" value={rename} onChange={(event) => setRename(event.target.value)} maxLength={120} /><button type="submit" aria-label="Confirmar nome"><Check size={15} /></button><button type="button" aria-label="Cancelar renomeação" onClick={() => setIsRenaming(false)}><X size={15} /></button></form> : <h1>{board?.name ?? "Selecione ou crie um board"}</h1>}
+          </div>
           <div className={styles.actions}>
-            {board && <><button type="button" onClick={() => imageInput.current?.click()} title="Adicionar imagem"><ImagePlus size={16} /></button><button type="button" onClick={() => downloadSvg(board, assets)} title="Exportar SVG">SVG</button><button type="button" onClick={() => void downloadPng(board, assets).catch((reason) => setError(String(reason)))} title="Exportar PNG">PNG</button></>}
+            {board && <><button type="button" onClick={() => { setRename(board.name); setIsRenaming(true); }} title="Renomear board"><Pencil size={16} /></button><button type="button" onClick={() => void duplicateBoard()} title="Duplicar board"><Copy size={16} /></button><button type="button" onClick={() => void deleteBoard()} title="Remover board"><Trash2 size={16} /></button><button type="button" onClick={() => imageInput.current?.click()} title="Adicionar imagem"><ImagePlus size={16} /></button><button type="button" onClick={() => downloadSvg(board, assets)} title="Exportar SVG">SVG</button><button type="button" onClick={() => void downloadPng(board, assets).catch((reason) => setError(String(reason)))} title="Exportar PNG">PNG</button></>}
             <button type="button" onClick={() => void exportPortable()} title="Exportar workspace"><Download size={16} /></button>
             <span className={styles.saved}>{board ? "Salvamento local ativo" : ""}</span>
           </div>
