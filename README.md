@@ -131,6 +131,6 @@ Contribuicoes sao bem-vindas. Leia os documentos acima antes de abrir issues, PR
 
 ## License
 
-No license file is currently included. Until a license is added, all rights are reserved by the project owner.
+LogLine is distributed under the MIT License. See `LICENSE` for the full text.
 
-Ainda nao existe arquivo de licenca neste repositorio. Ate que uma licenca seja adicionada, todos os direitos ficam reservados ao proprietario do projeto.
+O LogLine e distribuido sob a Licenca MIT. Consulte `LICENSE` para o texto completo.
